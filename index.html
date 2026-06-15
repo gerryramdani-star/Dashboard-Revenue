@@ -562,10 +562,14 @@
               setFetchError(null);
               setFetchWarnings([]);
 
+              // MENGGUNAKAN LINK BARU: Publikasi Seluruh Dokumen.
+              // Kita memanggil URL dasar yang sama, namun dengan tambahan ?gid=... untuk menargetkan tab spesifik.
+              const baseUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub';
+              
               const urls = [
-                'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv',
-                'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv',
-                'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv'
+                `${baseUrl}?gid=0&output=csv`,           // Tab 1: Core Clients
+                `${baseUrl}?gid=172172068&output=csv`,   // Tab 2: Strategic Revenue
+                `${baseUrl}?gid=586338828&output=csv`    // Tab 3: Project Revenue
               ];
 
               try {
