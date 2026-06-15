@@ -125,6 +125,44 @@
         };
         const UploadIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 
+        // --- GLOBAL DATE COUNTDOWN HELPER ---
+        const calculateCountdown = (dateStr) => {
+          if (!dateStr) return { text: '-', color: 'text-slate-500 dark:text-slate-400', label: 'Tdk Terdeteksi' };
+          
+          const months = {
+            jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, jun: 5,
+            jul: 6, agu: 7, sep: 8, okt: 9, nov: 10, des: 11,
+            oct: 9, dec: 11, aug: 7, sep: 8 // Fallback english
+          };
+          
+          const parts = dateStr.toLowerCase().split(' ');
+          if (parts.length < 3) return { text: dateStr, color: 'text-slate-500', label: dateStr };
+          
+          const day = parseInt(parts[0], 10);
+          const monthStr = parts[1].substring(0, 3);
+          const year = parseInt(parts[2], 10);
+          
+          const month = months[monthStr];
+          if (isNaN(day) || month === undefined || isNaN(year)) {
+            return { text: dateStr, color: 'text-slate-500', label: dateStr };
+          }
+          
+          const renewalDate = new Date(year, month, day);
+          const today = new Date(); // Sesuai real-time
+          const diffTime = renewalDate - today;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays < 0) {
+            return { text: `Habis Kontrak (${Math.abs(diffDays)} hari lalu)`, color: 'text-rose-600 dark:text-rose-500', label: 'Expired' };
+          } else if (diffDays <= 30) {
+            return { text: `Tinggal ${diffDays} Hari Lagi`, color: 'text-rose-500 dark:text-rose-400 font-bold animate-pulse', label: 'Kritis' };
+          } else if (diffDays <= 90) {
+            return { text: `Tinggal ${diffDays} Hari Lagi`, color: 'text-amber-500 dark:text-amber-400', label: 'Perlu Perhatian' };
+          } else {
+            return { text: `Aman (${diffDays} Hari)`, color: 'text-emerald-500 dark:text-emerald-400', label: 'Aman' };
+          }
+        };
+
         // --- PAGE COMPONENTS ---
         const ExecutiveSummary = ({ data, setData, isEditing }) => {
           const gap = data.target - data.current;
@@ -261,7 +299,6 @@
         };
 
         const SalesFunnel = ({ data, setData, isEditing }) => {
-          // Fallback UI ketika data kosong
           if (!data || data.length === 0) {
             return (
               <Card className="flex flex-col items-center justify-center p-12">
@@ -270,12 +307,9 @@
               </Card>
             );
           }
-
           const updateStage = (index, field, value) => { 
             const newData = [...data]; 
             newData[index][field] = value; 
-            
-            // Auto Kalkulasi ulang untuk Gap dan Conversion Rate jika di-edit manual
             newData.forEach((step, i, arr) => {
                 step.gap = step.count - step.target;
                 if (i === 0) {
@@ -287,44 +321,19 @@
             });
             setData(newData); 
           };
-
           return (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <SectionTitle title="Visual Funnel" subtitle="Konversi tahapan sales pipeline" />
                 <div className="flex flex-col items-center w-full py-4">
                   {data.map((step, index) => {
-                    // Lebar visual proporsional secara statis (100% perlahan turun ke ~35%)
                     const width = 100 - (index * (65 / Math.max(1, data.length - 1)));
-                    
                     const isLast = index === data.length - 1;
                     const bgClass = index < 3 ? 'bg-[#0A1F44]' : index < 5 ? 'bg-[#1a3668]' : 'bg-[#F5A623]';
-                    
                     return (
                       <div key={index} className="w-full flex flex-col items-center">
-                        {/* LAYER FUNNEL (CENTERED & STACKED TEXT) */}
-                        <div 
-                          className={`${bgClass} text-white flex flex-col justify-center items-center px-4 py-3 shadow-sm transition-all hover:scale-[1.02]`} 
-                          style={{ 
-                            width: `${width}%`, 
-                            borderTopLeftRadius: index === 0 ? '8px' : '0', 
-                            borderTopRightRadius: index === 0 ? '8px' : '0', 
-                            borderBottomLeftRadius: isLast ? '8px' : '4px', 
-                            borderBottomRightRadius: isLast ? '8px' : '4px', 
-                            clipPath: isLast ? 'none' : 'polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%)' 
-                          }}
-                        >
-                          <span className="text-[10px] md:text-xs font-semibold text-white/80 uppercase tracking-widest text-center mb-0.5">{step.stage}</span>
-                          <span className="text-xl md:text-2xl font-black leading-none">{step.count}</span>
-                        </div>
-                        
-                        {/* BADGE CONVERSION RATE (DI TENGAH) */}
-                        {!isLast && (
-                          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 my-1.5 flex items-center justify-center bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 z-10 relative -mt-1 shadow-sm">
-                            <ArrowDownRight size={12} className="mr-1 text-[#F5A623]" /> 
-                            {data[index + 1].conv}
-                          </div>
-                        )}
+                        <div className={`${bgClass} text-white flex flex-col justify-center items-center px-4 py-3 shadow-sm transition-all hover:scale-[1.02]`} style={{ width: `${width}%`, borderTopLeftRadius: index === 0 ? '8px' : '0', borderTopRightRadius: index === 0 ? '8px' : '0', borderBottomLeftRadius: isLast ? '8px' : '4px', borderBottomRightRadius: isLast ? '8px' : '4px', clipPath: isLast ? 'none' : 'polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%)' }}><span className="text-[10px] md:text-xs font-semibold text-white/80 uppercase tracking-widest text-center mb-0.5">{step.stage}</span><span className="text-xl md:text-2xl font-black leading-none">{step.count}</span></div>
+                        {!isLast && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 my-1.5 flex items-center justify-center bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 z-10 relative -mt-1 shadow-sm"><ArrowDownRight size={12} className="mr-1 text-[#F5A623]" /> {data[index + 1].conv}</div>}
                       </div>
                     )
                   })}
@@ -353,6 +362,9 @@
         };
 
         const ClientHealthFull = ({ clients, setClients, isEditing }) => {
+          const [selectedClient, setSelectedClient] = useState(null);
+          const [actionStatus, setActionStatus] = useState(null); // Feedback non-blocking pengganti alert()
+
           const updateClient = (idx, field, val) => { const updated = [...clients]; updated[idx][field] = val; setClients(updated); };
           const getHealthBadge = (health) => {
             switch(health) {
@@ -362,42 +374,274 @@
               default: return null;
             }
           };
+
+          const handleActionSim = (msg) => {
+            setActionStatus(msg);
+            setTimeout(() => setActionStatus(null), 3500);
+          };
+
+          // IMPLEMENTASI: Matriks Prioritas Risiko (Filter & Sortir Klien Kuning/Merah berdasarkan Revenue Terbesar)
+          const urgentClients = clients
+            .filter(c => c.health === 'Merah' || c.health === 'Kuning' || c.score < 75)
+            .sort((a, b) => b.rev - a.rev)
+            .slice(0, 3); // Ambil top 3 dengan nilai dampak keuangan terbesar
+
           return (
-            <div className="space-y-6">
+            <div className="space-y-6 relative animate-in fade-in duration-300">
+              {/* STATUS GRID UTAMA */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"><h3 className="text-emerald-800 dark:text-emerald-400 font-bold text-lg">Client Sehat</h3><p className="text-3xl font-black text-emerald-600 dark:text-emerald-500 mt-2">{clients.filter(c => c.health === 'Hijau').length}</p></Card>
                  <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"><h3 className="text-yellow-800 dark:text-yellow-400 font-bold text-lg">Perlu Perhatian</h3><p className="text-3xl font-black text-yellow-600 dark:text-yellow-500 mt-2">{clients.filter(c => c.health === 'Kuning').length}</p></Card>
                  <Card className="bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800"><h3 className="text-rose-800 dark:text-rose-400 font-bold text-lg">Risiko Tinggi</h3><p className="text-3xl font-black text-rose-600 dark:text-rose-500 mt-2">{clients.filter(c => c.health === 'Merah').length}</p></Card>
               </div>
+
+              {/* IMPLEMENTASI: Matriks Prioritas Risiko (Urgent Intervention List) */}
+              <div className="mb-6">
+                <SectionTitle 
+                  title="Prioritas Intervensi Darurat (Financial Risk Mitigation)" 
+                  subtitle="Penyelamatan Finansial: Daftar klien berstatus Kuning/Merah yang otomatis diurutkan dari dampak nilai pendapatan bulanan terbesar" 
+                />
+                {urgentClients.length === 0 ? (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl p-6 flex items-center gap-4 shadow-sm">
+                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 rounded-full shrink-0">
+                      <Check className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-emerald-800 dark:text-emerald-400">Semua Klien Aman!</h4>
+                      <p className="text-sm text-emerald-600 dark:text-emerald-500 mt-0.5">Tidak ada klien aktif yang berstatus Kuning atau Merah saat ini. Pertahankan standar layanan operasional prima!</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {urgentClients.map((client, idx) => {
+                      const countdown = calculateCountdown(client.renewal);
+                      return (
+                        <div 
+                          key={idx} 
+                          onClick={() => setSelectedClient(client)}
+                          className="bg-white dark:bg-slate-800 rounded-xl border-2 border-rose-200 dark:border-rose-950/40 hover:border-rose-400 dark:hover:border-rose-700 shadow-sm p-5 cursor-pointer transition-all hover:scale-[1.02] relative overflow-hidden group"
+                        >
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 dark:bg-rose-500/10 rounded-full translate-x-8 -translate-y-8 group-hover:scale-125 transition-transform" />
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <span className="px-2 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 text-[10px] font-bold uppercase rounded tracking-wider">Risiko Prioritas {idx + 1}</span>
+                              <h4 className="font-bold text-slate-800 dark:text-white text-lg mt-1 truncate max-w-[150px]">{client.name}</h4>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded text-xs font-black ${
+                              client.health === 'Merah' 
+                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400' 
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}>
+                              Score: {client.score}%
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-2 mt-4 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 dark:text-slate-400">Revenue Terancam:</span>
+                              <span className="font-bold text-rose-600 dark:text-rose-400">{formatIDR(client.rev)} / bln</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 dark:text-slate-400">Sisa Kontrak:</span>
+                              <span className={`font-bold ${countdown.color}`}>{countdown.text}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs font-bold text-[#0A1F44] dark:text-[#F5A623]">
+                            <span>Klik untuk Intervensi Darurat</span>
+                            <ChevronRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* CLIENT HEALTH TABLE LIST */}
               <Card>
-                <SectionTitle title="Client Health Roster" subtitle="Monitoring status dan risiko per klien" />
+                <SectionTitle title="Client Health Roster" subtitle="Monitoring status dan sisa masa kontrak per klien (klik baris untuk melihat detail pilar)" />
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400"><tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Score</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Renewal Date</th><th className="px-4 py-3">Next Action</th></tr></thead>
+                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400"><tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Score</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Renewal Date & Countdown</th><th className="px-4 py-3">Next Action</th></tr></thead>
                      <tbody>
                        {clients.length === 0 && <tr><td colSpan="5" className="px-4 py-4 text-center text-slate-500 italic">Data klien belum tersedia...</td></tr>}
-                       {clients.map((client, i) => (
-                         <tr key={i} className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                           <td className="px-4 py-3 font-bold dark:text-white"><EditableField isEditing={isEditing} value={client.name} onChange={(v) => updateClient(i, 'name', v)} /></td>
-                           <td className="px-4 py-3">
-                             <div className="flex items-center gap-2">
-                               <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block"><div className={`h-full ${client.health === 'Hijau' ? 'bg-emerald-500' : client.health === 'Kuning' ? 'bg-yellow-400' : 'bg-rose-500'}`} style={{ width: `${client.score}%` }}></div></div>
-                               <EditableField type="number" isEditing={isEditing} value={client.score} onChange={(v) => updateClient(i, 'score', v)} inputClass="w-16 font-bold" className="text-xs font-bold dark:text-slate-400" />
-                             </div>
-                           </td>
-                           <td className="px-4 py-3">
-                             {isEditing ? (
-                               <select value={client.health} onChange={(e) => updateClient(i, 'health', e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm focus:outline-none dark:text-white"><option value="Hijau">Hijau</option><option value="Kuning">Kuning</option><option value="Merah">Merah</option></select>
-                             ) : getHealthBadge(client.health)}
-                           </td>
-                           <td className="px-4 py-3 text-slate-500 dark:text-slate-400"><EditableField isEditing={isEditing} value={client.renewal} onChange={(v) => updateClient(i, 'renewal', v)} /></td>
-                           <td className="px-4 py-3 text-[#0A1F44] dark:text-[#F5A623] font-medium"><EditableField isEditing={isEditing} value={client.action} onChange={(v) => updateClient(i, 'action', v)} /></td>
-                         </tr>
-                       ))}
+                       {clients.map((client, i) => {
+                         const countdown = calculateCountdown(client.renewal);
+                         return (
+                           <tr 
+                             key={i} 
+                             onClick={() => setSelectedClient(client)}
+                             className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-100/70 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
+                           >
+                             <td className="px-4 py-3 font-bold dark:text-white">
+                                <EditableField isEditing={isEditing} value={client.name} onChange={(v) => updateClient(i, 'name', v)} />
+                             </td>
+                             <td className="px-4 py-3">
+                               <div className="flex items-center gap-2">
+                                 <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block"><div className={`h-full ${client.health === 'Hijau' ? 'bg-emerald-500' : client.health === 'Kuning' ? 'bg-yellow-400' : 'bg-rose-500'}`} style={{ width: `${client.score}%` }}></div></div>
+                                 <EditableField type="number" isEditing={isEditing} value={client.score} onChange={(v) => updateClient(i, 'score', v)} inputClass="w-16 font-bold" className="text-xs font-bold dark:text-slate-400" />
+                               </div>
+                             </td>
+                             <td className="px-4 py-3">
+                               {isEditing ? (
+                                 <select value={client.health} onChange={(e) => updateClient(i, 'health', e.target.value)} onClick={(e) => e.stopPropagation()} className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm focus:outline-none dark:text-white"><option value="Hijau">Hijau</option><option value="Kuning">Kuning</option><option value="Merah">Merah</option></select>
+                               ) : getHealthBadge(client.health)}
+                             </td>
+                             
+                             <td className="px-4 py-3">
+                                <div className="font-semibold text-slate-700 dark:text-slate-300">
+                                  <EditableField isEditing={isEditing} value={client.renewal} onChange={(v) => updateClient(i, 'renewal', v)} />
+                                </div>
+                                <div className={`text-xs font-bold ${countdown.color} mt-0.5`}>
+                                  {countdown.text}
+                                </div>
+                             </td>
+                             
+                             <td className="px-4 py-3 text-[#0A1F44] dark:text-[#F5A623] font-medium"><EditableField isEditing={isEditing} value={client.action} onChange={(v) => updateClient(i, 'action', v)} /></td>
+                           </tr>
+                         )
+                       })}
                      </tbody>
                   </table>
                 </div>
               </Card>
+
+              {/* INTERACTIVE SIDEBAR DETAILS PANEL */}
+              {selectedClient && (
+                <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+                  {/* Backdrop Overlay */}
+                  <div 
+                    className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
+                    onClick={() => { setSelectedClient(null); setActionStatus(null); }}
+                  />
+                  {/* Sidebar Panel */}
+                  <div className="relative w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl h-full flex flex-col p-6 border-l border-slate-200 dark:border-slate-700 animate-in slide-in-from-right duration-300">
+                    <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-700 mb-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-[#0A1F44] dark:text-white">{selectedClient.name}</h3>
+                        <p className="text-xs text-slate-400 mt-1">ID Klien: CS-{selectedClient.name.toUpperCase().substring(0,3)}-{Math.floor(1000 + (selectedClient.rev % 9000))}</p>
+                      </div>
+                      <button 
+                        onClick={() => { setSelectedClient(null); setActionStatus(null); }} 
+                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+                      {/* Ringkasan Skor & Status */}
+                      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
+                        <div>
+                          <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Health Score</span>
+                          <span className="text-3xl font-black text-[#0A1F44] dark:text-white mt-1 block">{selectedClient.score}%</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Status Roster</span>
+                          {getHealthBadge(selectedClient.health)}
+                        </div>
+                      </div>
+
+                      {/* Detail 3 Pilar Skor */}
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Evaluasi 3 Pilar Utama</h4>
+                        <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl space-y-4 border border-slate-100 dark:border-slate-800/50">
+                          {/* Pilar 1: Kepuasan */}
+                          <div>
+                            <div className="flex justify-between text-sm mb-1.5">
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">Kepuasan Klien</span>
+                              <span className="font-bold text-[#0A1F44] dark:text-white">{selectedClient.kepuasan || 0} / 10</span>
+                            </div>
+                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(selectedClient.kepuasan || 0) * 10}%` }}></div>
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-1 block">Bobot Kontribusi: 30% dari total Health Score</span>
+                          </div>
+
+                          {/* Pilar 2: Ketepatan Pembayaran */}
+                          <div>
+                            <div className="flex justify-between text-sm mb-1.5">
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">Ketepatan Pembayaran</span>
+                              <span className="font-bold text-[#0A1F44] dark:text-white">{selectedClient.ketepatan || 0} / 10</span>
+                            </div>
+                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(selectedClient.ketepatan || 0) * 10}%` }}></div>
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-1 block">Bobot Kontribusi: 40% dari total Health Score</span>
+                          </div>
+
+                          {/* Pilar 3: Keterlibatan */}
+                          <div>
+                            <div className="flex justify-between text-sm mb-1.5">
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">Keterlibatan Tim</span>
+                              <span className="font-bold text-[#0A1F44] dark:text-white">{selectedClient.keterlibatan || 0} / 10</span>
+                            </div>
+                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(selectedClient.keterlibatan || 0) * 10}%` }}></div>
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-1 block">Bobot Kontribusi: 30% dari total Health Score</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Revenue Contribution */}
+                      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Kontribusi Pendapatan</span>
+                        <span className="text-md font-bold text-slate-800 dark:text-white">{formatIDR(selectedClient.rev)} / bln</span>
+                      </div>
+
+                      {/* Detail Sisa Kontrak & Countdown */}
+                      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-2 border border-slate-100 dark:border-slate-800">
+                        <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block">Sisa Masa Kontrak</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Berakhir Pada:</span>
+                          <span className="text-sm font-bold text-slate-800 dark:text-white">{selectedClient.renewal}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Status Waktu:</span>
+                          <span className={`text-sm font-black ${calculateCountdown(selectedClient.renewal).color}`}>
+                            {calculateCountdown(selectedClient.renewal).text}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Rekomendasi Tindakan Strategis */}
+                      <div className="space-y-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Strategi Penanganan AM (Next Action)</span>
+                        <div className="bg-[#0A1F44]/5 dark:bg-slate-900/30 p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                          <p className="text-sm text-slate-600 dark:text-slate-300 italic font-semibold">
+                            "{selectedClient.action || 'Tidak ada rekomendasi tindakan spesifik saat ini.'}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toast Notification (Ganti Alert Box) */}
+                    {actionStatus && (
+                      <div className="p-3 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl mb-3 flex items-center gap-2 animate-in fade-in">
+                        <Info size={16} /> {actionStatus}
+                      </div>
+                    )}
+
+                    {/* Quick Action Buttons */}
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2 mt-6">
+                      <button 
+                        className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:bg-[#20ba5a] transition-colors shadow-sm"
+                        onClick={() => handleActionSim(`Menghubungkan ke API WhatsApp untuk menyapa ${selectedClient.name}...`)}
+                      >
+                        Hubungi via WhatsApp
+                      </button>
+                      <button 
+                        className="w-full flex items-center justify-center gap-2 bg-[#0A1F44] dark:bg-slate-700 text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-colors shadow-sm"
+                        onClick={() => handleActionSim(`Template email evaluasi kualitas kepuasan bulanan siap dikirim ke ${selectedClient.name}!`)}
+                      >
+                        Kirim Email Review Bulanan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         };
@@ -644,7 +888,7 @@
                 `${baseUrl}?gid=172172068&output=csv`,   // Tab 2: Strategic Revenue
                 `${baseUrl}?gid=586338828&output=csv`,   // Tab 3: Project Revenue
                 `${baseUrl}?gid=506452129&output=csv`,   // Tab 4: Target KPI 
-                `${baseUrl}?gid=1113045615&output=csv` // Tab 5: Sales Funnel
+                `${baseUrl}?gid=1113045615&output=csv`   // Tab 5: Sales Funnel
               ];
 
               try {
@@ -698,9 +942,18 @@
                 let coreData = [], stratData = [], projData = [], targetData = null;
 
                 if (results[0].data) {
+                    // MEMETAKAN PILAR DETAIL: Kepuasan, Ketepatan Bayar, Keterlibatan
                     coreData = parseCSV(results[0].data).map(item => ({ 
-                        name: item.name || '', rev: parseNumber(item.rev), score: parseNumber(item.score),
-                        health: item.health || 'Kuning', renewal: item.renewal || '', action: item.action || '', risk: item.risk || ''
+                        name: item.name || '', 
+                        rev: parseNumber(item.rev), 
+                        score: parseNumber(item.score),
+                        health: item.health || 'Kuning', 
+                        renewal: item.renewal || '', 
+                        action: item.action || '', 
+                        risk: item.risk || '',
+                        kepuasan: parseNumber(item.kepuasan_klien),
+                        ketepatan: parseNumber(item.ketepatan_bayar),
+                        keterlibatan: parseNumber(item.keterlibatan)
                     }));
                     setClientsData(coreData);
                 }
@@ -733,7 +986,6 @@
                 if (results[4].data) {
                     const parsedFunnel = parseCSV(results[4].data);
                     
-                    // Kalkulasi otomatis untuk Conv Rate dan Gap saat pertama kali data dimuat
                     const formattedFunnel = parsedFunnel.map((item, index, arr) => {
                         const count = parseNumber(item.count);
                         const target = parseNumber(item.target);
@@ -853,7 +1105,7 @@
                       <div className="flex items-center text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
                         <Calendar size={14} className="mr-2 text-[#F5A623]" />
                         {isEditing ? (
-                          <input type="text" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors" placeholder="Misal: Juni 2026" />
+                          <input type="text" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors" />
                         ) : (<span>Periode: {currentPeriod}</span>)}
                       </div>
                     </div>
@@ -865,7 +1117,7 @@
                     <div className="hidden lg:flex items-center gap-2 mx-2 border-r border-slate-200 dark:border-slate-700 pr-4">
                        <button className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#0A1F44] dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-md"><Filter size={14} /> Filter</button>
                     </div>
-                    <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 rounded-full transition-colors">
+                    <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 rounded-full transition-colors">
                       {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
                     <button className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 rounded-full relative transition-colors hidden sm:block">
