@@ -36,17 +36,8 @@
         const initialClients = [];
         const initialStrategicRevenue = [];
         const initialProjectRevenue = [];
+        const initialFunnelData = []; 
 
-        const initialFunnelData = [
-          { stage: 'Prospect', count: 100, conv: '100%', target: 120, gap: -20 },
-          { stage: 'Executive Meeting', count: 20, conv: '20%', target: 25, gap: -5 },
-          { stage: 'Discovery', count: 15, conv: '75%', target: 20, gap: -5 },
-          { stage: 'Opportunity', count: 10, conv: '66%', target: 15, gap: -5 },
-          { stage: 'Proposal', count: 7, conv: '70%', target: 10, gap: -3 },
-          { stage: 'Negotiation', count: 5, conv: '71%', target: 7, gap: -2 },
-          { stage: 'Closing', count: 3, conv: '60%', target: 5, gap: -2 },
-        ];
-        
         const initialAcquisition = [
           { channel: 'Founder Networking', percentage: 40, leads: 40, meeting: 8, opp: 4, prop: 3, close: 1, rev: 26200000 },
           { channel: 'Referral Program', percentage: 25, leads: 25, meeting: 5, opp: 3, prop: 2, close: 1, rev: 16375000 },
@@ -270,21 +261,70 @@
         };
 
         const SalesFunnel = ({ data, setData, isEditing }) => {
-          const maxCount = data[0]?.count || 1;
-          const updateStage = (index, field, value) => { const newData = [...data]; newData[index][field] = value; newData[index].gap = newData[index].count - newData[index].target; setData(newData); };
+          // Fallback UI ketika data kosong
+          if (!data || data.length === 0) {
+            return (
+              <Card className="flex flex-col items-center justify-center p-12">
+                <Filter size={48} className="text-slate-300 mb-4" />
+                <p className="text-slate-500 italic">Menunggu data Sales Funnel...</p>
+              </Card>
+            );
+          }
+
+          const updateStage = (index, field, value) => { 
+            const newData = [...data]; 
+            newData[index][field] = value; 
+            
+            // Auto Kalkulasi ulang untuk Gap dan Conversion Rate jika di-edit manual
+            newData.forEach((step, i, arr) => {
+                step.gap = step.count - step.target;
+                if (i === 0) {
+                    step.conv = '100%';
+                } else {
+                    const prevCount = arr[i - 1].count;
+                    step.conv = prevCount > 0 ? Math.round((step.count / prevCount) * 100) + '%' : '0%';
+                }
+            });
+            setData(newData); 
+          };
+
           return (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <SectionTitle title="Visual Funnel" subtitle="Konversi tahapan sales pipeline" />
-                <div className="flex flex-col items-center w-full py-4 space-y-1">
+                <div className="flex flex-col items-center w-full py-4">
                   {data.map((step, index) => {
-                    const width = Math.max(15, (step.count / maxCount) * 100);
+                    // Lebar visual proporsional secara statis (100% perlahan turun ke ~35%)
+                    const width = 100 - (index * (65 / Math.max(1, data.length - 1)));
+                    
                     const isLast = index === data.length - 1;
                     const bgClass = index < 3 ? 'bg-[#0A1F44]' : index < 5 ? 'bg-[#1a3668]' : 'bg-[#F5A623]';
+                    
                     return (
                       <div key={index} className="w-full flex flex-col items-center">
-                        <div className={`${bgClass} text-white flex justify-between items-center px-4 py-3 shadow-sm transition-all hover:scale-[1.02]`} style={{ width: `${width}%`, borderTopLeftRadius: index === 0 ? '8px' : '0', borderTopRightRadius: index === 0 ? '8px' : '0', borderBottomLeftRadius: isLast ? '8px' : '4px', borderBottomRightRadius: isLast ? '8px' : '4px', clipPath: isLast ? 'none' : 'polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%)' }}><span className="text-xs md:text-sm font-medium truncate pr-2">{step.stage}</span><span className="font-bold">{step.count}</span></div>
-                        {!isLast && <div className="text-xs text-slate-400 my-1 flex items-center"><ArrowDownRight size={12} className="mr-1" /> {data[index + 1].conv}</div>}
+                        {/* LAYER FUNNEL (CENTERED & STACKED TEXT) */}
+                        <div 
+                          className={`${bgClass} text-white flex flex-col justify-center items-center px-4 py-3 shadow-sm transition-all hover:scale-[1.02]`} 
+                          style={{ 
+                            width: `${width}%`, 
+                            borderTopLeftRadius: index === 0 ? '8px' : '0', 
+                            borderTopRightRadius: index === 0 ? '8px' : '0', 
+                            borderBottomLeftRadius: isLast ? '8px' : '4px', 
+                            borderBottomRightRadius: isLast ? '8px' : '4px', 
+                            clipPath: isLast ? 'none' : 'polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%)' 
+                          }}
+                        >
+                          <span className="text-[10px] md:text-xs font-semibold text-white/80 uppercase tracking-widest text-center mb-0.5">{step.stage}</span>
+                          <span className="text-xl md:text-2xl font-black leading-none">{step.count}</span>
+                        </div>
+                        
+                        {/* BADGE CONVERSION RATE (DI TENGAH) */}
+                        {!isLast && (
+                          <div className="text-xs font-bold text-slate-500 dark:text-slate-400 my-1.5 flex items-center justify-center bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 z-10 relative -mt-1 shadow-sm">
+                            <ArrowDownRight size={12} className="mr-1 text-[#F5A623]" /> 
+                            {data[index + 1].conv}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -603,16 +643,18 @@
                 `${baseUrl}?gid=0&output=csv`,           // Tab 1: Core Clients
                 `${baseUrl}?gid=172172068&output=csv`,   // Tab 2: Strategic Revenue
                 `${baseUrl}?gid=586338828&output=csv`,   // Tab 3: Project Revenue
-                `${baseUrl}?gid=506452129&output=csv` // Tab 4: Target KPI (HARAP GANTI GID INI NANTI)
+                `${baseUrl}?gid=506452129&output=csv`,   // Tab 4: Target KPI 
+                `${baseUrl}?gid=1113045615&output=csv` // Tab 5: Sales Funnel
               ];
 
               try {
-                // Menarik KE-EMPAT data secara bersamaan
+                // Menarik KE-LIMA data secara bersamaan
                 const results = await Promise.all([
                     fetchSafely(urls[0], "Core Clients"),
                     fetchSafely(urls[1], "Strategic Revenue"),
                     fetchSafely(urls[2], "Project Revenue"),
-                    fetchSafely(urls[3], "Target KPI")
+                    fetchSafely(urls[3], "Target KPI"),
+                    fetchSafely(urls[4], "Sales Funnel")
                 ]);
 
                 // Mengumpulkan pesan error jika ada sheet yang gagal
@@ -620,7 +662,7 @@
                 if (warnings.length > 0) {
                     setFetchWarnings(warnings);
                     // Jika SEMUANYA gagal, beri alert merah besar
-                    if (warnings.length === 4) {
+                    if (warnings.length === 5) {
                         throw new Error("Semua koneksi ke Google Sheets diblokir. Harap periksa izin 'Publish to Web' atau nonaktifkan pemblokir iklan (Adblocker/Brave Shields).");
                     }
                 }
@@ -664,7 +706,6 @@
                 }
                 
                 if (results[1].data) {
-                    // MENGAMBIL KOLOM REALISASI UNTUK STRATEGIC
                     stratData = parseCSV(results[1].data).map(item => ({ 
                         name: item.name || '', 
                         rev: parseNumber(item.rev), 
@@ -674,7 +715,6 @@
                 }
                 
                 if (results[2].data) {
-                    // MENGAMBIL KOLOM REALISASI UNTUK PROJECT
                     projData = parseCSV(results[2].data).map(item => ({ 
                         name: item.name || '', 
                         rev: parseNumber(item.rev), 
@@ -686,8 +726,36 @@
                 if (results[3].data) {
                     const parsedTarget = parseCSV(results[3].data);
                     if (parsedTarget.length > 0) {
-                        targetData = parsedTarget[0]; // Hanya ambil baris pertama data target
+                        targetData = parsedTarget[0]; 
                     }
+                }
+
+                if (results[4].data) {
+                    const parsedFunnel = parseCSV(results[4].data);
+                    
+                    // Kalkulasi otomatis untuk Conv Rate dan Gap saat pertama kali data dimuat
+                    const formattedFunnel = parsedFunnel.map((item, index, arr) => {
+                        const count = parseNumber(item.count);
+                        const target = parseNumber(item.target);
+                        const prevCount = index > 0 ? parseNumber(arr[index - 1].count) : count;
+                        
+                        let conv = '100%';
+                        if (index > 0 && prevCount > 0) {
+                            conv = Math.round((count / prevCount) * 100) + '%';
+                        } else if (index > 0 && prevCount === 0) {
+                            conv = '0%';
+                        }
+
+                        return {
+                            stage: item.stage || '',
+                            count: count,
+                            target: target,
+                            conv: conv,
+                            gap: count - target
+                        };
+                    });
+                    
+                    if (formattedFunnel.length > 0) setFunnelData(formattedFunnel);
                 }
 
                 // Kalkulasi Total Revenue BERDASARKAN REALISASI
@@ -696,21 +764,18 @@
                 const totalProjRealisasi = projData.reduce((sum, item) => sum + (item.realisasi || 0), 0);
 
                 // Kalkulasi Nilai Rata-rata Health Score
-                let avgHealthScore = 80; // Nilai default jika data klien kosong
+                let avgHealthScore = 80; 
                 if (coreData.length > 0) {
                     const totalScore = coreData.reduce((sum, item) => sum + (item.score || 0), 0);
                     avgHealthScore = Math.round(totalScore / coreData.length);
                 }
 
-                // Memperbarui State Executive Summary dengan data kalkulasi dan Target KPI
                 setRevenueData(prev => ({
                   ...prev,
-                  // CURRENT REVENUE = CORE + REALISASI STRATEGIC + REALISASI PROJECT
                   current: totalCoreRev + totalStratRealisasi + totalProjRealisasi,
                   activeClients: coreData.length,
-                  healthScore: avgHealthScore, // Dimasukkan otomatis hasil rata-rata
+                  healthScore: avgHealthScore, 
                   
-                  // Jika targetData berhasil diambil dari sheet ke-4, gunakan nilainya, jika tidak gunakan default
                   target: targetData ? parseNumber(targetData.target_revenue) : prev.target,
                   forecast: targetData ? parseNumber(targetData.forecast) : prev.forecast,
                   targetNew: targetData ? parseNumber(targetData.target_new_client) : prev.targetNew,
