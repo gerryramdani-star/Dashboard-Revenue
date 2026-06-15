@@ -31,11 +31,35 @@
           Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar
         } from 'https://esm.sh/lucide-react@0.292.0';
 
-        // --- INITIAL MOCK DATA ---
+        // --- INITIAL MOCK DATA (DIKEMBALIKAN SEBAGAI CADANGAN SAAT OFFLINE) ---
         const initialRevenueData = { current: 65500000, target: 120000000, activeClients: 14, targetNew: 3, renewalRate: 90, healthScore: 80, forecast: 85000000 };
-        const initialClients = [];
-        const initialStrategicRevenue = [];
-        const initialProjectRevenue = [];
+        
+        const initialClients = [
+          { name: 'Hilon', rev: 12000000, health: 'Hijau', score: 95, renewal: '15 Okt 2026', risk: 'Low', action: 'Upsell Strategy' },
+          { name: 'Gusfil', rev: 10000000, health: 'Hijau', score: 90, renewal: '22 Nov 2026', risk: 'Low', action: 'Maintenance' },
+          { name: 'Sleepedia', rev: 6000000, health: 'Hijau', score: 88, renewal: '05 Des 2026', risk: 'Low', action: 'Cross-sell' },
+          { name: 'Sanbe', rev: 7000000, health: 'Hijau', score: 85, renewal: '12 Jan 2027', risk: 'Low', action: 'Maintenance' },
+          { name: 'Parahyangan', rev: 7000000, health: 'Hijau', score: 85, renewal: '20 Jan 2027', risk: 'Low', action: 'Maintenance' },
+          { name: 'Anugrah', rev: 7000000, health: 'Hijau', score: 82, renewal: '10 Feb 2027', risk: 'Low', action: 'Maintenance' },
+          { name: 'Innovilage', rev: 6500000, health: 'Kuning', score: 65, renewal: '01 Sep 2026', risk: 'Medium', action: 'Review Meeting' },
+          { name: 'Borneo', rev: 7000000, health: 'Kuning', score: 60, renewal: '15 Sep 2026', risk: 'Medium', action: 'Value Demonstration' },
+          { name: 'Uvee', rev: 5000000, health: 'Kuning', score: 55, renewal: '30 Agu 2026', risk: 'Medium', action: 'Resolve Issues' },
+          { name: 'Olympus', rev: 4000000, health: 'Merah', score: 30, renewal: '10 Agu 2026', risk: 'High', action: 'Urgent Intervention' },
+        ];
+
+        const initialStrategicRevenue = [
+          { name: 'Sleepedia (Profit 1%)', rev: 5000000 },
+          { name: 'BTP (Barter Office)', rev: 6000000 },
+          { name: 'Saltriver (1.5%/rumah)', rev: 4500000 }
+        ];
+
+        const initialProjectRevenue = [
+          { name: 'Branding', rev: 15000000 },
+          { name: 'Training', rev: 8000000 },
+          { name: 'Consulting', rev: 12000000 },
+          { name: 'Special Project', rev: 0 }
+        ];
+
         const initialFunnelData = [
           { stage: 'Prospect', count: 100, conv: '100%', target: 120, gap: -20 },
           { stage: 'Executive Meeting', count: 20, conv: '20%', target: 25, gap: -5 },
@@ -45,6 +69,7 @@
           { stage: 'Negotiation', count: 5, conv: '71%', target: 7, gap: -2 },
           { stage: 'Closing', count: 3, conv: '60%', target: 5, gap: -2 },
         ];
+        
         const initialAcquisition = [
           { channel: 'Founder Networking', percentage: 40, leads: 40, meeting: 8, opp: 4, prop: 3, close: 1, rev: 26200000 },
           { channel: 'Referral Program', percentage: 25, leads: 25, meeting: 5, opp: 3, prop: 2, close: 1, rev: 16375000 },
@@ -52,6 +77,7 @@
           { channel: 'Website & LinkedIn', percentage: 10, leads: 10, meeting: 2, opp: 1, prop: 1, close: 0, rev: 6550000 },
           { channel: 'Strategic Partnership', percentage: 5, leads: 5, meeting: 1, opp: 0, prop: 0, close: 0, rev: 3275000 },
         ];
+        
         const initialMarketing = {
           main: { leads: 45, cr: 4.2 },
           platforms: [
@@ -61,11 +87,13 @@
             { platform: 'Website (SEO)', reach: '10.2K', visits: '4.5K', click: 0, leads: 4, cr: '0.8%' },
           ]
         };
+        
         const initialRoadmap = {
           protect: [ { name: 'Renewal Existing Client', value: 90, status: '90%' }, { name: 'Client Health Score >80', value: 75, status: '75%' }, { name: 'Churn Reduction', value: 50, status: 'In Progress' } ],
           optimize: [ { name: 'Upselling Service', value: 30, status: '30%' }, { name: 'Cross Selling', value: 45, status: '45%' }, { name: 'ARPC Growth', value: 15, status: '15%' } ],
           growth: [ { name: 'New Client Acquisition', value: 66, status: '2/3 Target' }, { name: 'Strategic Partnership', value: 20, status: '1 Active' }, { name: 'New Recurring Rev', value: 0, status: 'Not Started' } ]
         };
+        
         const initialTeamKpi = {
           ceo: [ { label: 'Exec. Meeting', val: '12 / 20' }, { label: 'Opportunity', val: '6 / 10' }, { label: 'Client Baru', val: '1 / 3' } ],
           cmo: [ { label: 'Pipeline Value', val: 'Rp 240M' }, { label: 'MQLs', val: '45' }, { label: 'Rev Contribution', val: '15%' } ],
@@ -73,6 +101,7 @@
           cs: [ { label: 'Renewal Rate', val: '90%' }, { label: 'Upselling', val: 'Rp 15M' }, { label: 'NPS Score', val: '78' } ],
           coo: [ { label: 'On Time Delivery', val: '92%' }, { label: 'Project Completion', val: '85%' }, { label: 'Resource Util.', val: '88%' } ]
         };
+        
         const initialFinance = { totalRev: 65500000, grossProfit: 45850000, opEx: 25000000, netProfit: 20850000, cashPos: 125000000, ar: 35000000, ap: 12500000, burnRate: 45000000 };
 
         const formatIDR = (num) => 'Rp' + Number(num).toLocaleString('id-ID');
@@ -504,19 +533,17 @@
             const fetchSheetData = async () => {
               setIsLoading(true);
               try {
-                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                // KITA HAPUS PROXY-NYA: Ambil data secara langsung karena di Netlify tidak ada pembatasan CORS seketat di Canvas
                 const urls = [
-                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv'),
-                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv'),
-                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv')
+                  'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv',
+                  'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv',
+                  'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv'
                 ];
 
                 const responses = await Promise.all(urls.map(url => fetch(url)));
-                const jsons = await Promise.all(responses.map(res => res.json()));
-                const texts = jsons.map(data => data.contents || "");
+                const texts = await Promise.all(responses.map(res => res.text()));
 
-                if (!texts[0]) throw new Error("Data tidak ditemukan dari Proxy");
-
+                // Pembaca format CSV
                 const parseCSV = (csv) => {
                   const lines = csv.split(/\r?\n/).filter(line => line.trim());
                   if (lines.length < 2) return [];
@@ -550,6 +577,7 @@
                 if (parsedStrategic.length > 0) setStrategicData(parsedStrategic);
                 if (parsedProject.length > 0) setProjectData(parsedProject);
 
+                // Menghitung Ulang Total Revenue untuk menu Executive Summary
                 const totalCoreRev = parsedCore.reduce((sum, item) => sum + item.rev, 0);
                 const totalStratRev = parsedStrategic.reduce((sum, item) => sum + item.rev, 0);
                 const totalProjRev = parsedProject.reduce((sum, item) => sum + item.rev, 0);
@@ -559,8 +587,10 @@
                   current: totalCoreRev + totalStratRev + totalProjRev,
                   activeClients: parsedCore.length
                 }));
+
               } catch (error) {
-                console.error("Gagal mengambil data dari Google Sheets:", error);
+                console.warn("Gagal terhubung ke Google Sheets, menggunakan data lokal cadangan:", error);
+                // Jika koneksi gagal, data akan dikembalikan ke data dummy awal sehingga dashboard tidak terlihat kosong
                 setClientsData(initialClients);
                 setStrategicData(initialStrategicRevenue);
                 setProjectData(initialProjectRevenue);
@@ -568,6 +598,7 @@
                 setIsLoading(false);
               }
             };
+            
             fetchSheetData();
           }, []);
 
