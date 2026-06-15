@@ -562,30 +562,30 @@
               setFetchError(null);
               setFetchWarnings([]);
 
-              // MENGGUNAKAN LINK BARU: Publikasi Seluruh Dokumen.
-              // Kita memanggil URL dasar yang sama, namun dengan tambahan ?gid=... untuk menargetkan tab spesifik.
               const baseUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub';
               
               const urls = [
                 `${baseUrl}?gid=0&output=csv`,           // Tab 1: Core Clients
                 `${baseUrl}?gid=172172068&output=csv`,   // Tab 2: Strategic Revenue
-                `${baseUrl}?gid=586338828&output=csv`    // Tab 3: Project Revenue
+                `${baseUrl}?gid=586338828&output=csv`,   // Tab 3: Project Revenue
+                `${baseUrl}?gid=506452129&output=csv` // Tab 4: Target KPI (HARAP GANTI GID INI NANTI)
               ];
 
               try {
-                // Menarik ketiga data secara bersamaan, NAMUN dicegah saling menggagalkan
+                // Menarik KE-EMPAT data secara bersamaan
                 const results = await Promise.all([
                     fetchSafely(urls[0], "Core Clients"),
                     fetchSafely(urls[1], "Strategic Revenue"),
-                    fetchSafely(urls[2], "Project Revenue")
+                    fetchSafely(urls[2], "Project Revenue"),
+                    fetchSafely(urls[3], "Target KPI")
                 ]);
 
                 // Mengumpulkan pesan error jika ada sheet yang gagal
                 const warnings = results.filter(r => r.error).map(r => r.error);
                 if (warnings.length > 0) {
                     setFetchWarnings(warnings);
-                    // Jika KETIGANYA gagal, beri alert merah besar
-                    if (warnings.length === 3) {
+                    // Jika SEMUANYA gagal, beri alert merah besar
+                    if (warnings.length === 4) {
                         throw new Error("Semua koneksi ke Google Sheets diblokir. Harap periksa izin 'Publish to Web' atau nonaktifkan pemblokir iklan (Adblocker/Brave Shields).");
                     }
                 }
@@ -618,7 +618,7 @@
                 };
 
                 // Proses Data secara independen (Hanya yang berhasil di-fetch)
-                let coreData = [], stratData = [], projData = [];
+                let coreData = [], stratData = [], projData = [], targetData = null;
 
                 if (results[0].data) {
                     coreData = parseCSV(results[0].data).map(item => ({ 
@@ -638,15 +638,37 @@
                     setProjectData(projData);
                 }
 
-                // Kalkulasi Total
+                if (results[3].data) {
+                    const parsedTarget = parseCSV(results[3].data);
+                    if (parsedTarget.length > 0) {
+                        targetData = parsedTarget[0]; // Hanya ambil baris pertama data target
+                    }
+                }
+
+                // Kalkulasi Total Revenue
                 const totalCoreRev = coreData.reduce((sum, item) => sum + item.rev, 0);
                 const totalStratRev = stratData.reduce((sum, item) => sum + item.rev, 0);
                 const totalProjRev = projData.reduce((sum, item) => sum + item.rev, 0);
 
+                // Kalkulasi Nilai Rata-rata Health Score
+                let avgHealthScore = 80; // Nilai default jika data klien kosong
+                if (coreData.length > 0) {
+                    const totalScore = coreData.reduce((sum, item) => sum + (item.score || 0), 0);
+                    avgHealthScore = Math.round(totalScore / coreData.length);
+                }
+
+                // Memperbarui State Executive Summary dengan data kalkulasi dan Target KPI
                 setRevenueData(prev => ({
                   ...prev,
                   current: totalCoreRev + totalStratRev + totalProjRev,
-                  activeClients: coreData.length
+                  activeClients: coreData.length,
+                  healthScore: avgHealthScore, // Dimasukkan otomatis hasil rata-rata
+                  
+                  // Jika targetData berhasil diambil dari sheet ke-4, gunakan nilainya, jika tidak gunakan default
+                  target: targetData ? parseNumber(targetData.target_revenue) : prev.target,
+                  forecast: targetData ? parseNumber(targetData.forecast) : prev.forecast,
+                  targetNew: targetData ? parseNumber(targetData.target_new_client) : prev.targetNew,
+                  renewalRate: targetData ? parseNumber(targetData.renewal_rate) : prev.renewalRate,
                 }));
 
               } catch (error) {
