@@ -1,1020 +1,690 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, DollarSign, Filter, Bell, Sun, Moon, Download, 
-  ChevronRight, BarChart2, Users, Target, Activity, Map, UserCheck, 
-  Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Revenue Lagikreatif</title>
+    
+    <!-- 1. Import Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    
+    <!-- 2. Import Babel untuk membaca sintaks React (JSX) di browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    
+    <!-- Tempat Aplikasi React akan dirender -->
+    <div id="root"></div>
 
-// --- INITIAL MOCK DATA ---
-const initialRevenueData = {
-  current: 65500000,
-  target: 120000000,
-  activeClients: 14,
-  targetNew: 3,
-  renewalRate: 90,
-  healthScore: 80,
-  forecast: 85000000
-};
+    <!-- 3. Kode Utama Aplikasi React -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'https://esm.sh/react@18';
+        import { createRoot } from 'https://esm.sh/react-dom@18/client';
+        import { 
+          LayoutDashboard, DollarSign, Filter, Bell, Sun, Moon, Download, 
+          ChevronRight, BarChart2, Users, Target, Activity, Map, UserCheck, 
+          Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar
+        } from 'https://esm.sh/lucide-react@0.292.0';
 
-const initialClients = [
-  { name: 'Hilon', rev: 12000000, health: 'Hijau', score: 95, renewal: '15 Okt 2026', risk: 'Low', action: 'Upsell Strategy' },
-  { name: 'Gusfil', rev: 10000000, health: 'Hijau', score: 90, renewal: '22 Nov 2026', risk: 'Low', action: 'Maintenance' },
-  { name: 'Sleepedia', rev: 6000000, health: 'Hijau', score: 88, renewal: '05 Des 2026', risk: 'Low', action: 'Cross-sell' },
-  { name: 'Sanbe', rev: 7000000, health: 'Hijau', score: 85, renewal: '12 Jan 2027', risk: 'Low', action: 'Maintenance' },
-  { name: 'Parahyangan', rev: 7000000, health: 'Hijau', score: 85, renewal: '20 Jan 2027', risk: 'Low', action: 'Maintenance' },
-  { name: 'Anugrah', rev: 7000000, health: 'Hijau', score: 82, renewal: '10 Feb 2027', risk: 'Low', action: 'Maintenance' },
-  { name: 'Innovilage', rev: 6500000, health: 'Kuning', score: 65, renewal: '01 Sep 2026', risk: 'Medium', action: 'Review Meeting' },
-  { name: 'Borneo', rev: 7000000, health: 'Kuning', score: 60, renewal: '15 Sep 2026', risk: 'Medium', action: 'Value Demonstration' },
-  { name: 'Uvee', rev: 5000000, health: 'Kuning', score: 55, renewal: '30 Agu 2026', risk: 'Medium', action: 'Resolve Issues' },
-  { name: 'Olympus', rev: 4000000, health: 'Merah', score: 30, renewal: '10 Agu 2026', risk: 'High', action: 'Urgent Intervention' },
-];
+        // --- INITIAL MOCK DATA ---
+        const initialRevenueData = { current: 65500000, target: 120000000, activeClients: 14, targetNew: 3, renewalRate: 90, healthScore: 80, forecast: 85000000 };
+        const initialClients = [];
+        const initialStrategicRevenue = [];
+        const initialProjectRevenue = [];
+        const initialFunnelData = [
+          { stage: 'Prospect', count: 100, conv: '100%', target: 120, gap: -20 },
+          { stage: 'Executive Meeting', count: 20, conv: '20%', target: 25, gap: -5 },
+          { stage: 'Discovery', count: 15, conv: '75%', target: 20, gap: -5 },
+          { stage: 'Opportunity', count: 10, conv: '66%', target: 15, gap: -5 },
+          { stage: 'Proposal', count: 7, conv: '70%', target: 10, gap: -3 },
+          { stage: 'Negotiation', count: 5, conv: '71%', target: 7, gap: -2 },
+          { stage: 'Closing', count: 3, conv: '60%', target: 5, gap: -2 },
+        ];
+        const initialAcquisition = [
+          { channel: 'Founder Networking', percentage: 40, leads: 40, meeting: 8, opp: 4, prop: 3, close: 1, rev: 26200000 },
+          { channel: 'Referral Program', percentage: 25, leads: 25, meeting: 5, opp: 3, prop: 2, close: 1, rev: 16375000 },
+          { channel: 'Government & BUMN', percentage: 20, leads: 20, meeting: 4, opp: 2, prop: 1, close: 1, rev: 13100000 },
+          { channel: 'Website & LinkedIn', percentage: 10, leads: 10, meeting: 2, opp: 1, prop: 1, close: 0, rev: 6550000 },
+          { channel: 'Strategic Partnership', percentage: 5, leads: 5, meeting: 1, opp: 0, prop: 0, close: 0, rev: 3275000 },
+        ];
+        const initialMarketing = {
+          main: { leads: 45, cr: 4.2 },
+          platforms: [
+            { platform: 'Instagram', reach: '45.2K', visits: '3.1K', click: 420, leads: 15, cr: '3.5%' },
+            { platform: 'LinkedIn', reach: '12.5K', visits: '1.2K', click: 350, leads: 18, cr: '5.1%' },
+            { platform: 'TikTok', reach: '85.0K', visits: '5.4K', click: 600, leads: 8, cr: '1.3%' },
+            { platform: 'Website (SEO)', reach: '10.2K', visits: '4.5K', click: 0, leads: 4, cr: '0.8%' },
+          ]
+        };
+        const initialRoadmap = {
+          protect: [ { name: 'Renewal Existing Client', value: 90, status: '90%' }, { name: 'Client Health Score >80', value: 75, status: '75%' }, { name: 'Churn Reduction', value: 50, status: 'In Progress' } ],
+          optimize: [ { name: 'Upselling Service', value: 30, status: '30%' }, { name: 'Cross Selling', value: 45, status: '45%' }, { name: 'ARPC Growth', value: 15, status: '15%' } ],
+          growth: [ { name: 'New Client Acquisition', value: 66, status: '2/3 Target' }, { name: 'Strategic Partnership', value: 20, status: '1 Active' }, { name: 'New Recurring Rev', value: 0, status: 'Not Started' } ]
+        };
+        const initialTeamKpi = {
+          ceo: [ { label: 'Exec. Meeting', val: '12 / 20' }, { label: 'Opportunity', val: '6 / 10' }, { label: 'Client Baru', val: '1 / 3' } ],
+          cmo: [ { label: 'Pipeline Value', val: 'Rp 240M' }, { label: 'MQLs', val: '45' }, { label: 'Rev Contribution', val: '15%' } ],
+          ae: [ { label: 'Proposal Sent', val: '7' }, { label: 'Win Rate', val: '42%' }, { label: 'Closing', val: '3' } ],
+          cs: [ { label: 'Renewal Rate', val: '90%' }, { label: 'Upselling', val: 'Rp 15M' }, { label: 'NPS Score', val: '78' } ],
+          coo: [ { label: 'On Time Delivery', val: '92%' }, { label: 'Project Completion', val: '85%' }, { label: 'Resource Util.', val: '88%' } ]
+        };
+        const initialFinance = { totalRev: 65500000, grossProfit: 45850000, opEx: 25000000, netProfit: 20850000, cashPos: 125000000, ar: 35000000, ap: 12500000, burnRate: 45000000 };
 
-const initialStrategicRevenue = [
-  { name: 'Sleepedia (Profit 1%)', rev: 5000000 },
-  { name: 'BTP (Barter Office)', rev: 6000000 },
-  { name: 'Saltriver (1.5%/rumah)', rev: 4500000 }
-];
+        const formatIDR = (num) => 'Rp' + Number(num).toLocaleString('id-ID');
 
-const initialProjectRevenue = [
-  { name: 'Branding', rev: 15000000 },
-  { name: 'Training', rev: 8000000 },
-  { name: 'Consulting', rev: 12000000 },
-  { name: 'Special Project', rev: 0 }
-];
-
-const initialFunnelData = [
-  { stage: 'Prospect', count: 100, conv: '100%', target: 120, gap: -20 },
-  { stage: 'Executive Meeting', count: 20, conv: '20%', target: 25, gap: -5 },
-  { stage: 'Discovery', count: 15, conv: '75%', target: 20, gap: -5 },
-  { stage: 'Opportunity', count: 10, conv: '66%', target: 15, gap: -5 },
-  { stage: 'Proposal', count: 7, conv: '70%', target: 10, gap: -3 },
-  { stage: 'Negotiation', count: 5, conv: '71%', target: 7, gap: -2 },
-  { stage: 'Closing', count: 3, conv: '60%', target: 5, gap: -2 },
-];
-
-const initialAcquisition = [
-  { channel: 'Founder Networking', percentage: 40, leads: 40, meeting: 8, opp: 4, prop: 3, close: 1, rev: 26200000 },
-  { channel: 'Referral Program', percentage: 25, leads: 25, meeting: 5, opp: 3, prop: 2, close: 1, rev: 16375000 },
-  { channel: 'Government & BUMN', percentage: 20, leads: 20, meeting: 4, opp: 2, prop: 1, close: 1, rev: 13100000 },
-  { channel: 'Website & LinkedIn', percentage: 10, leads: 10, meeting: 2, opp: 1, prop: 1, close: 0, rev: 6550000 },
-  { channel: 'Strategic Partnership', percentage: 5, leads: 5, meeting: 1, opp: 0, prop: 0, close: 0, rev: 3275000 },
-];
-
-const initialMarketing = {
-  main: { leads: 45, cr: 4.2 },
-  platforms: [
-    { platform: 'Instagram', reach: '45.2K', visits: '3.1K', click: 420, leads: 15, cr: '3.5%' },
-    { platform: 'LinkedIn', reach: '12.5K', visits: '1.2K', click: 350, leads: 18, cr: '5.1%' },
-    { platform: 'TikTok', reach: '85.0K', visits: '5.4K', click: 600, leads: 8, cr: '1.3%' },
-    { platform: 'Website (SEO)', reach: '10.2K', visits: '4.5K', click: 0, leads: 4, cr: '0.8%' },
-  ]
-};
-
-const initialRoadmap = {
-  protect: [
-    { name: 'Renewal Existing Client', value: 90, status: '90%' },
-    { name: 'Client Health Score >80', value: 75, status: '75%' },
-    { name: 'Churn Reduction', value: 50, status: 'In Progress' }
-  ],
-  optimize: [
-    { name: 'Upselling Service', value: 30, status: '30%' },
-    { name: 'Cross Selling', value: 45, status: '45%' },
-    { name: 'ARPC Growth', value: 15, status: '15%' }
-  ],
-  growth: [
-    { name: 'New Client Acquisition', value: 66, status: '2/3 Target' },
-    { name: 'Strategic Partnership', value: 20, status: '1 Active' },
-    { name: 'New Recurring Rev', value: 0, status: 'Not Started' }
-  ]
-};
-
-const initialTeamKpi = {
-  ceo: [ { label: 'Exec. Meeting', val: '12 / 20' }, { label: 'Opportunity', val: '6 / 10' }, { label: 'Client Baru', val: '1 / 3' } ],
-  cmo: [ { label: 'Pipeline Value', val: 'Rp 240M' }, { label: 'MQLs', val: '45' }, { label: 'Rev Contribution', val: '15%' } ],
-  ae: [ { label: 'Proposal Sent', val: '7' }, { label: 'Win Rate', val: '42%' }, { label: 'Closing', val: '3' } ],
-  cs: [ { label: 'Renewal Rate', val: '90%' }, { label: 'Upselling', val: 'Rp 15M' }, { label: 'NPS Score', val: '78' } ],
-  coo: [ { label: 'On Time Delivery', val: '92%' }, { label: 'Project Completion', val: '85%' }, { label: 'Resource Util.', val: '88%' } ]
-};
-
-const initialFinance = {
-  totalRev: 65500000, grossProfit: 45850000, opEx: 25000000, netProfit: 20850000,
-  cashPos: 125000000, ar: 35000000, ap: 12500000, burnRate: 45000000
-};
-
-const formatIDR = (num) => 'Rp' + Number(num).toLocaleString('id-ID');
-
-// --- UTILITY COMPONENTS ---
-
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 ${className}`}>
-    {children}
-  </div>
-);
-
-const SectionTitle = ({ title, subtitle }) => (
-  <div className="mb-6">
-    <h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">{title}</h2>
-    {subtitle && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>}
-  </div>
-);
-
-// Generic Editable Field to make inputs easy
-const EditableField = ({ isEditing, value, onChange, type = "text", prefix = "", suffix = "", className = "", inputClass = "w-full max-w-[120px]" }) => {
-  if (!isEditing) {
-    let displayValue = value;
-    if (type === 'number') displayValue = Number(value).toLocaleString('id-ID');
-    return <span className={className}>{prefix}{displayValue}{suffix}</span>;
-  }
-  
-  return (
-    <div className="flex items-center gap-1">
-      {prefix && <span className="text-xs text-slate-500">{prefix}</span>}
-      <input 
-        type={type} 
-        value={value} 
-        onChange={(e) => onChange(type === 'number' ? Number(e.target.value) : e.target.value)}
-        className={`bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#F5A623] dark:text-white ${inputClass}`}
-      />
-      {suffix && <span className="text-xs text-slate-500">{suffix}</span>}
-    </div>
-  );
-};
-
-// Editable KPI Card
-const KPICard = ({ title, value, rawValue, isEditing, onValueChange, isCurrency = false, subtitle, icon: Icon, trend, colorClass = "text-[#0A1F44] dark:text-white" }) => (
-  <Card>
-    <div className="flex justify-between items-start">
-      <div className="w-full mr-4">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{title}</p>
-        
-        {isEditing && onValueChange ? (
-          <input 
-            type="number" 
-            value={rawValue} 
-            onChange={(e) => onValueChange(Number(e.target.value))}
-            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-lg font-bold text-[#0A1F44] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]"
-          />
-        ) : (
-          <h3 className={`text-2xl font-bold ${colorClass} truncate`}>{isCurrency ? formatIDR(rawValue) : value}</h3>
-        )}
-
-        {subtitle && <p className="text-xs text-slate-400 mt-2">{subtitle}</p>}
-      </div>
-      <div className={`p-3 rounded-lg flex-shrink-0 ${trend === 'up' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : trend === 'down' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-[#0A1F44]/10 text-[#0A1F44] dark:bg-slate-700 dark:text-[#F5A623]'}`}>
-        <Icon size={20} />
-      </div>
-    </div>
-  </Card>
-);
-
-const ProgressBar = ({ value, max, label, color = "bg-[#0A1F44]" }) => {
-  const percentage = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
-  return (
-    <div className="w-full">
-      <div className="flex justify-between text-sm mb-1">
-        <span className="font-medium dark:text-slate-300">{label}</span>
-        <span className="font-bold dark:text-white">{percentage.toFixed(1)}%</span>
-      </div>
-      <div className="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
-      </div>
-    </div>
-  );
-};
-
-// --- PAGE COMPONENTS ---
-
-const ExecutiveSummary = ({ data, setData, isEditing }) => {
-  const gap = data.target - data.current;
-  const updateData = (key, value) => setData(prev => ({ ...prev, [key]: value }));
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Current Recurring Revenue" rawValue={data.current} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('current', val)} icon={DollarSign} trend="up" colorClass="text-[#0A1F44] dark:text-white" />
-        <KPICard title="Target Revenue" rawValue={data.target} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('target', val)} icon={Target} colorClass="text-[#0A1F44] dark:text-white" />
-        <KPICard title="Revenue Gap" rawValue={gap} isCurrency value={formatIDR(gap)} icon={Activity} trend={gap > 0 ? "down" : "up"} colorClass={gap > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"} subtitle={gap <= 0 ? "Target Achieved!" : "Needs action"} />
-        <KPICard title="Forecast (90 Hari)" rawValue={data.forecast} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('forecast', val)} icon={BarChart2} trend="up" colorClass="text-emerald-600 dark:text-emerald-400" />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <KPICard title="Active Clients" value={data.activeClients} rawValue={data.activeClients} isEditing={isEditing} onValueChange={(val) => updateData('activeClients', val)} icon={Users} />
-        <KPICard title="Target New Client" value={data.targetNew} rawValue={data.targetNew} isEditing={isEditing} onValueChange={(val) => updateData('targetNew', val)} icon={UserCheck} />
-        <KPICard title="Renewal Rate" value={`${data.renewalRate}%`} rawValue={data.renewalRate} isEditing={isEditing} onValueChange={(val) => updateData('renewalRate', val)} icon={Activity} />
-        <KPICard title="Client Health Score" value={`${data.healthScore}%`} rawValue={data.healthScore} isEditing={isEditing} onValueChange={(val) => updateData('healthScore', val)} icon={Map} colorClass="text-[#F5A623]" />
-      </div>
-
-      <Card className="mt-6">
-        <SectionTitle title="Revenue Health Meter" subtitle="Status pencapaian berdasarkan komposisi target" />
-        <div className="mb-8">
-          <ProgressBar value={data.current} max={data.target} label={`Pencapaian: ${formatIDR(data.current)} dari ${formatIDR(data.target)}`} color="bg-[#F5A623]" />
-        </div>
-        
-        <div className="relative pt-8 pb-4">
-          <div className="absolute top-0 w-full flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">
-            <span>0</span><span>70 Juta</span><span>100 Juta</span><span>120 Juta+</span>
-          </div>
-          <div className="h-4 w-full flex rounded-full overflow-hidden shadow-inner">
-            <div className="h-full bg-rose-500 w-[58.3%] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Merah (0-70 Juta)</div></div>
-            <div className="h-full bg-yellow-400 w-[25%] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Kuning (70-100 Juta)</div></div>
-            <div className="h-full bg-emerald-500 w-[16.7%] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Hijau (100-120 Juta)</div></div>
-            <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-600 flex-1 min-w-[20px] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 right-0 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Emas (120 Juta+)</div></div>
-          </div>
-          <div className="absolute top-2 -ml-2 transition-all duration-500" style={{ left: `${Math.min(100, (data.current/data.target)*100)}%` }}>
-            <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-[#0A1F44] dark:border-t-white mx-auto"></div>
-            <div className="w-0.5 h-6 bg-[#0A1F44] dark:bg-white mx-auto"></div>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-const RevenueDashboardFull = ({ clients, setClients, strategic, setStrategic, project, setProject, isEditing }) => {
-  const updateClient = (idx, field, val) => {
-    const updated = [...clients];
-    updated[idx][field] = val;
-    setClients(updated);
-  };
-
-  const updateStrategic = (idx, field, val) => {
-    const updated = [...strategic];
-    updated[idx][field] = val;
-    setStrategic(updated);
-  };
-
-  const updateProject = (idx, field, val) => {
-    const updated = [...project];
-    updated[idx][field] = val;
-    setProject(updated);
-  };
-  
-  const totalCore = clients.reduce((acc, c) => acc + Number(c.rev), 0);
-  const totalStrategic = strategic.reduce((acc, s) => acc + Number(s.rev), 0);
-  const totalProject = project.reduce((acc, p) => acc + Number(p.rev), 0);
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 1. CORE RECURRING REVENUE */}
-        <Card className="lg:col-span-2">
-          <SectionTitle title="Core Recurring Revenue" subtitle="Pendapatan tetap bulanan / tahunan dari klien aktif" />
-          <div className="space-y-4">
-             {clients.filter(c => c.rev >= 0).map((client, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="w-40 font-medium text-sm dark:text-slate-300">
-                    <EditableField isEditing={isEditing} value={client.name} onChange={(v) => updateClient(i, 'name', v)} inputClass="w-full" />
-                  </div>
-                  <div className="flex-1 mx-4 h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden hidden sm:block">
-                    <div className="h-full bg-[#0A1F44] rounded-full transition-all" style={{ width: `${Math.min(100, (client.rev / 15000000) * 100)}%` }}></div>
-                  </div>
-                  <div className="w-36 text-right font-bold text-sm dark:text-white">
-                    <EditableField isEditing={isEditing} type="number" prefix="Rp " value={client.rev} onChange={(v) => updateClient(i, 'rev', v)} className="" inputClass="w-28 text-right" />
-                  </div>
-                </div>
-             ))}
-             <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-center justify-between">
-                  <div className="w-32 font-bold text-sm text-[#F5A623]">TOTAL CORE</div>
-                  <div className="flex-1 mx-4"></div>
-                  <div className="w-36 text-right font-bold text-sm text-[#F5A623]">{formatIDR(totalCore)}</div>
-                </div>
-             </div>
-          </div>
-        </Card>
-        
-        <div className="space-y-6">
-          {/* 2. STRATEGIC REVENUE */}
-          <Card className="bg-gradient-to-br from-[#0A1F44] to-[#1a3668] text-white border-none shadow-lg">
-            <h3 className="font-bold text-lg mb-4 text-[#F5A623]">Strategic Revenue</h3>
-            <div className="space-y-3 text-sm">
-              {strategic.map((item, i) => (
-                <div key={i} className="flex justify-between items-center pb-3 border-b border-white/10 last:border-0">
-                  <span className="w-3/5">
-                    <EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateStrategic(i, 'name', v)} inputClass="w-full bg-transparent border-white/30 text-white" />
-                  </span>
-                  <span className="font-bold text-right w-2/5">
-                    <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateStrategic(i, 'rev', v)} inputClass="w-20 bg-transparent border-white/30 text-white text-right" />
-                  </span>
-                </div>
-              ))}
-              <div className="pt-3 mt-1 border-t-2 border-white/20">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#F5A623]">TOTAL STRATEGIC</span>
-                  <span className="font-bold text-[#F5A623]">{formatIDR(totalStrategic)}</span>
-                </div>
+        // --- UTILITY COMPONENTS ---
+        const Card = ({ children, className = "" }) => <div className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 ${className}`}>{children}</div>;
+        const SectionTitle = ({ title, subtitle }) => <div className="mb-6"><h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">{title}</h2>{subtitle && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>}</div>;
+        const EditableField = ({ isEditing, value, onChange, type = "text", prefix = "", suffix = "", className = "", inputClass = "w-full max-w-[120px]" }) => {
+          if (!isEditing) {
+            let displayValue = value;
+            if (type === 'number') displayValue = Number(value).toLocaleString('id-ID');
+            return <span className={className}>{prefix}{displayValue}{suffix}</span>;
+          }
+          return (
+            <div className="flex items-center gap-1">
+              {prefix && <span className="text-xs text-slate-500">{prefix}</span>}
+              <input type={type} value={value} onChange={(e) => onChange(type === 'number' ? Number(e.target.value) : e.target.value)} className={`bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#F5A623] dark:text-white ${inputClass}`} />
+              {suffix && <span className="text-xs text-slate-500">{suffix}</span>}
+            </div>
+          );
+        };
+        const KPICard = ({ title, value, rawValue, isEditing, onValueChange, isCurrency = false, subtitle, icon: Icon, trend, colorClass = "text-[#0A1F44] dark:text-white" }) => (
+          <Card>
+            <div className="flex justify-between items-start">
+              <div className="w-full mr-4">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{title}</p>
+                {isEditing && onValueChange ? (
+                  <input type="number" value={rawValue} onChange={(e) => onValueChange(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-lg font-bold text-[#0A1F44] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]" />
+                ) : (
+                  <h3 className={`text-2xl font-bold ${colorClass} truncate`}>{isCurrency ? formatIDR(rawValue) : value}</h3>
+                )}
+                {subtitle && <p className="text-xs text-slate-400 mt-2">{subtitle}</p>}
+              </div>
+              <div className={`p-3 rounded-lg flex-shrink-0 ${trend === 'up' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : trend === 'down' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-[#0A1F44]/10 text-[#0A1F44] dark:bg-slate-700 dark:text-[#F5A623]'}`}>
+                <Icon size={20} />
               </div>
             </div>
           </Card>
-          
-          {/* 3. PROJECT REVENUE */}
-          <Card className="shadow-md border-t-4 border-t-[#0A1F44]">
-            <h3 className="font-bold text-lg mb-4 dark:text-white">Project Revenue</h3>
-            <div className="space-y-3 text-sm">
-              {project.map((item, i) => (
-                <div key={i} className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
-                  <span className="w-3/5 font-medium text-slate-600 dark:text-slate-300">
-                    <EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateProject(i, 'name', v)} inputClass="w-full" />
-                  </span>
-                  <span className="font-bold text-[#0A1F44] dark:text-white text-right w-2/5">
-                    <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateProject(i, 'rev', v)} inputClass="w-20 text-right" />
-                  </span>
-                </div>
-              ))}
-              <div className="pt-3 mt-1 border-t border-slate-200 dark:border-slate-600">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#0A1F44] dark:text-white">TOTAL PROJECT</span>
-                  <span className="font-bold text-[#0A1F44] dark:text-white">{formatIDR(totalProject)}</span>
-                </div>
+        );
+        const ProgressBar = ({ value, max, label, color = "bg-[#0A1F44]" }) => {
+          const percentage = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+          return (
+            <div className="w-full">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="font-medium dark:text-slate-300">{label}</span>
+                <span className="font-bold dark:text-white">{percentage.toFixed(1)}%</span>
+              </div>
+              <div className="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
               </div>
             </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-};
+          );
+        };
+        const UploadIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 
-const SalesFunnel = ({ data, setData, isEditing }) => {
-  const maxCount = data[0].count || 1;
-
-  const updateStage = (index, field, value) => {
-    const newData = [...data];
-    newData[index][field] = value;
-    newData[index].gap = newData[index].count - newData[index].target;
-    setData(newData);
-  };
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <SectionTitle title="Visual Funnel" subtitle="Konversi tahapan sales pipeline" />
-        <div className="flex flex-col items-center w-full py-4 space-y-1">
-          {data.map((step, index) => {
-            const width = Math.max(15, (step.count / maxCount) * 100);
-            const isLast = index === data.length - 1;
-            const bgClass = index < 3 ? 'bg-[#0A1F44]' : index < 5 ? 'bg-[#1a3668]' : 'bg-[#F5A623]';
-            
-            return (
-              <div key={index} className="w-full flex flex-col items-center">
-                <div className={`${bgClass} text-white flex justify-between items-center px-4 py-3 shadow-sm transition-all hover:scale-[1.02]`}
-                  style={{ width: `${width}%`, borderTopLeftRadius: index === 0 ? '8px' : '0', borderTopRightRadius: index === 0 ? '8px' : '0', borderBottomLeftRadius: isLast ? '8px' : '4px', borderBottomRightRadius: isLast ? '8px' : '4px', clipPath: isLast ? 'none' : 'polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%)' }}>
-                  <span className="text-xs md:text-sm font-medium truncate pr-2">{step.stage}</span>
-                  <span className="font-bold">{step.count}</span>
-                </div>
-                {!isLast && <div className="text-xs text-slate-400 my-1 flex items-center"><ArrowDownRight size={12} className="mr-1" /> {data[index + 1].conv}</div>}
+        // --- PAGE COMPONENTS ---
+        const ExecutiveSummary = ({ data, setData, isEditing }) => {
+          const gap = data.target - data.current;
+          const updateData = (key, value) => setData(prev => ({ ...prev, [key]: value }));
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <KPICard title="Current Recurring Revenue" rawValue={data.current} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('current', val)} icon={DollarSign} trend="up" colorClass="text-[#0A1F44] dark:text-white" />
+                <KPICard title="Target Revenue" rawValue={data.target} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('target', val)} icon={Target} colorClass="text-[#0A1F44] dark:text-white" />
+                <KPICard title="Revenue Gap" rawValue={gap} isCurrency value={formatIDR(gap)} icon={Activity} trend={gap > 0 ? "down" : "up"} colorClass={gap > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"} subtitle={gap <= 0 ? "Target Achieved!" : "Needs action"} />
+                <KPICard title="Forecast (90 Hari)" rawValue={data.forecast} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('forecast', val)} icon={BarChart2} trend="up" colorClass="text-emerald-600 dark:text-emerald-400" />
               </div>
-            )
-          })}
-        </div>
-      </Card>
-
-      <Card>
-         <SectionTitle title="Pipeline Metrics" subtitle="Target vs Actual Gap Analysis" />
-         <div className="overflow-x-auto">
-           <table className="w-full text-sm text-left">
-             <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400">
-               <tr><th className="px-4 py-3 rounded-tl-lg">Stage</th><th className="px-4 py-3">Actual</th><th className="px-4 py-3">Target</th><th className="px-4 py-3 rounded-tr-lg">Gap</th></tr>
-             </thead>
-             <tbody>
-               {data.map((row, i) => (
-                 <tr key={i} className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                   <td className="px-4 py-3 font-medium dark:text-slate-300">
-                     <EditableField isEditing={isEditing} value={row.stage} onChange={(v) => updateStage(i, 'stage', v)} />
-                   </td>
-                   <td className="px-4 py-3 font-bold dark:text-white">
-                     <EditableField type="number" isEditing={isEditing} value={row.count} onChange={(v) => updateStage(i, 'count', v)} inputClass="w-16" />
-                   </td>
-                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                      <EditableField type="number" isEditing={isEditing} value={row.target} onChange={(v) => updateStage(i, 'target', v)} inputClass="w-16" />
-                   </td>
-                   <td className={`px-4 py-3 font-bold ${row.gap < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                     {row.gap > 0 ? `+${row.gap}` : row.gap}
-                   </td>
-                 </tr>
-               ))}
-             </tbody>
-           </table>
-         </div>
-      </Card>
-    </div>
-  );
-};
-
-const ClientHealthFull = ({ clients, setClients, isEditing }) => {
-  const updateClient = (idx, field, val) => {
-    const updated = [...clients];
-    updated[idx][field] = val;
-    setClients(updated);
-  };
-
-  const getHealthBadge = (health) => {
-    switch(health) {
-      case 'Hijau': return <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full text-xs font-bold">Hijau</span>;
-      case 'Kuning': return <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 rounded-full text-xs font-bold">Kuning</span>;
-      case 'Merah': return <span className="px-2.5 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 rounded-full text-xs font-bold">Merah</span>;
-      default: return null;
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800">
-            <h3 className="text-emerald-800 dark:text-emerald-400 font-bold text-lg">Client Sehat</h3>
-            <p className="text-3xl font-black text-emerald-600 dark:text-emerald-500 mt-2">{clients.filter(c => c.health === 'Hijau').length}</p>
-         </Card>
-         <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-            <h3 className="text-yellow-800 dark:text-yellow-400 font-bold text-lg">Perlu Perhatian</h3>
-            <p className="text-3xl font-black text-yellow-600 dark:text-yellow-500 mt-2">{clients.filter(c => c.health === 'Kuning').length}</p>
-         </Card>
-         <Card className="bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800">
-            <h3 className="text-rose-800 dark:text-rose-400 font-bold text-lg">Risiko Tinggi</h3>
-            <p className="text-3xl font-black text-rose-600 dark:text-rose-500 mt-2">{clients.filter(c => c.health === 'Merah').length}</p>
-         </Card>
-      </div>
-
-      <Card>
-        <SectionTitle title="Client Health Roster" subtitle="Monitoring status dan risiko per klien" />
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-             <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400">
-               <tr>
-                 <th className="px-4 py-3">Client</th>
-                 <th className="px-4 py-3">Score</th>
-                 <th className="px-4 py-3">Status</th>
-                 <th className="px-4 py-3">Renewal Date</th>
-                 <th className="px-4 py-3">Next Action</th>
-               </tr>
-             </thead>
-             <tbody>
-               {clients.map((client, i) => (
-                 <tr key={i} className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                   <td className="px-4 py-3 font-bold dark:text-white">
-                      <EditableField isEditing={isEditing} value={client.name} onChange={(v) => updateClient(i, 'name', v)} />
-                   </td>
-                   <td className="px-4 py-3">
-                     <div className="flex items-center gap-2">
-                       <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
-                         <div className={`h-full ${client.health === 'Hijau' ? 'bg-emerald-500' : client.health === 'Kuning' ? 'bg-yellow-400' : 'bg-rose-500'}`} style={{ width: `${client.score}%` }}></div>
-                       </div>
-                       <EditableField type="number" isEditing={isEditing} value={client.score} onChange={(v) => updateClient(i, 'score', v)} inputClass="w-16 font-bold" className="text-xs font-bold dark:text-slate-400" />
-                     </div>
-                   </td>
-                   <td className="px-4 py-3">
-                     {isEditing ? (
-                       <select value={client.health} onChange={(e) => updateClient(i, 'health', e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm focus:outline-none dark:text-white">
-                          <option value="Hijau">Hijau</option>
-                          <option value="Kuning">Kuning</option>
-                          <option value="Merah">Merah</option>
-                       </select>
-                     ) : getHealthBadge(client.health)}
-                   </td>
-                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                      <EditableField isEditing={isEditing} value={client.renewal} onChange={(v) => updateClient(i, 'renewal', v)} />
-                   </td>
-                   <td className="px-4 py-3 text-[#0A1F44] dark:text-[#F5A623] font-medium">
-                      <EditableField isEditing={isEditing} value={client.action} onChange={(v) => updateClient(i, 'action', v)} />
-                   </td>
-                 </tr>
-               ))}
-             </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-const ClientAcquisitionFull = ({ data, setData, isEditing }) => {
-  const updateAcq = (idx, field, val) => {
-    const updated = [...data];
-    updated[idx][field] = val;
-    setData(updated);
-  };
-  
-  const totalLeads = data.reduce((sum, item) => sum + Number(item.leads), 0);
-  const totalMeeting = data.reduce((sum, item) => sum + Number(item.meeting), 0);
-  const totalOpp = data.reduce((sum, item) => sum + Number(item.opp), 0);
-  const totalProp = data.reduce((sum, item) => sum + Number(item.prop), 0);
-  const totalClose = data.reduce((sum, item) => sum + Number(item.close), 0);
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <SectionTitle title="Acquisition Channels" subtitle="Distribusi channel dan kontribusi revenue" />
-        <div className="space-y-6">
-          {data.map((item, i) => (
-            <div key={i}>
-              <div className="flex justify-between items-end mb-2">
-                <div className="flex-1 mr-4">
-                  <h4 className="font-bold text-[#0A1F44] dark:text-white mb-1">
-                    <EditableField isEditing={isEditing} value={item.channel} onChange={(v) => updateAcq(i, 'channel', v)} inputClass="w-full" />
-                  </h4>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <EditableField isEditing={isEditing} type="number" value={item.leads} onChange={(v) => updateAcq(i, 'leads', v)} inputClass="w-12" /> Leads → 
-                    <EditableField isEditing={isEditing} type="number" value={item.close} onChange={(v) => updateAcq(i, 'close', v)} inputClass="w-12" /> Closing
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <KPICard title="Active Clients" value={data.activeClients} rawValue={data.activeClients} isEditing={isEditing} onValueChange={(val) => updateData('activeClients', val)} icon={Users} />
+                <KPICard title="Target New Client" value={data.targetNew} rawValue={data.targetNew} isEditing={isEditing} onValueChange={(val) => updateData('targetNew', val)} icon={UserCheck} />
+                <KPICard title="Renewal Rate" value={`${data.renewalRate}%`} rawValue={data.renewalRate} isEditing={isEditing} onValueChange={(val) => updateData('renewalRate', val)} icon={Activity} />
+                <KPICard title="Client Health Score" value={`${data.healthScore}%`} rawValue={data.healthScore} isEditing={isEditing} onValueChange={(val) => updateData('healthScore', val)} icon={Map} colorClass="text-[#F5A623]" />
+              </div>
+              <Card className="mt-6">
+                <SectionTitle title="Revenue Health Meter" subtitle="Status pencapaian berdasarkan komposisi target" />
+                <div className="mb-8"><ProgressBar value={data.current} max={data.target} label={`Pencapaian: ${formatIDR(data.current)} dari ${formatIDR(data.target)}`} color="bg-[#F5A623]" /></div>
+                <div className="relative pt-8 pb-4">
+                  <div className="absolute top-0 w-full flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 px-2"><span>0</span><span>70 Juta</span><span>100 Juta</span><span>120 Juta+</span></div>
+                  <div className="h-4 w-full flex rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full bg-rose-500 w-[58.3%] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Merah (0-70 Juta)</div></div>
+                    <div className="h-full bg-yellow-400 w-[25%] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Kuning (70-100 Juta)</div></div>
+                    <div className="h-full bg-emerald-500 w-[16.7%] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Hijau (100-120 Juta)</div></div>
+                    <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-600 flex-1 min-w-[20px] relative group"><div className="opacity-0 group-hover:opacity-100 absolute -top-8 right-0 bg-slate-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap transition-opacity z-10">Emas (120 Juta+)</div></div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-[#F5A623]">
-                     <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateAcq(i, 'rev', v)} />
+                  <div className="absolute top-2 -ml-2 transition-all duration-500" style={{ left: `${Math.min(100, (data.current/data.target)*100)}%` }}>
+                    <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[10px] border-l-transparent border-r-transparent border-t-[#0A1F44] dark:border-t-white mx-auto"></div>
+                    <div className="w-0.5 h-6 bg-[#0A1F44] dark:bg-white mx-auto"></div>
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex justify-end">
-                     <EditableField isEditing={isEditing} type="number" value={item.percentage} onChange={(v) => updateAcq(i, 'percentage', v)} suffix="%" inputClass="w-12 text-right" /> Share
-                  </div>
-                </div>
-              </div>
-              <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div className="h-full bg-[#0A1F44] rounded-full" style={{ width: `${item.percentage}%` }}></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-      
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Total Leads</p><p className="text-xl font-bold dark:text-white">{totalLeads}</p></Card>
-        <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Meetings</p><p className="text-xl font-bold dark:text-white">{totalMeeting}</p></Card>
-        <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Opportunity</p><p className="text-xl font-bold dark:text-white">{totalOpp}</p></Card>
-        <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Proposal</p><p className="text-xl font-bold dark:text-white">{totalProp}</p></Card>
-        <Card className="text-center border-emerald-200 dark:border-emerald-800"><p className="text-xs text-slate-500 mb-1">Closing</p><p className="text-xl font-bold text-[#F5A623]">{totalClose}</p></Card>
-      </div>
-    </div>
-  );
-};
-
-const MarketingDashboardFull = ({ data, setData, isEditing }) => {
-  const updateMain = (field, val) => setData({...data, main: {...data.main, [field]: val}});
-  const updatePlatform = (idx, field, val) => {
-    const updatedPlatforms = [...data.platforms];
-    updatedPlatforms[idx][field] = val;
-    setData({...data, platforms: updatedPlatforms});
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-[#0A1F44] text-white rounded-xl p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10"><Activity size={120} /></div>
-        <h2 className="text-2xl font-bold mb-2 relative z-10">Fokus Utama: Leads Generated</h2>
-        <p className="text-slate-300 mb-6 max-w-lg relative z-10">Marketing difokuskan pada konversi nyata, bukan vanity metrics. Seluruh aktivitas diukur dari kemampuannya menghasilkan leads berkualitas untuk pipeline sales.</p>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
-            <p className="text-sm text-slate-300">Total Leads</p>
-            <p className="text-3xl font-bold text-[#F5A623] mt-1">
-               <EditableField isEditing={isEditing} type="number" value={data.main.leads} onChange={(v) => updateMain('leads', v)} inputClass="w-20 bg-transparent text-[#F5A623] border-white/30" />
-            </p>
-          </div>
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20">
-            <p className="text-sm text-slate-300">Avg. Conversion Rate</p>
-            <p className="text-3xl font-bold mt-1 flex items-center">
-               <EditableField isEditing={isEditing} type="number" value={data.main.cr} onChange={(v) => updateMain('cr', v)} inputClass="w-20 bg-transparent text-white border-white/30" /> %
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {data.platforms.map((item, i) => (
-          <Card key={i}>
-            <h3 className="font-bold text-lg mb-4 text-[#0A1F44] dark:text-white border-b pb-2 dark:border-slate-700">
-               <EditableField isEditing={isEditing} value={item.platform} onChange={(v) => updatePlatform(i, 'platform', v)} inputClass="w-full" />
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Reach</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.reach} onChange={(v) => updatePlatform(i, 'reach', v)} inputClass="w-16 text-right" /></span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Profile Visit</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.visits} onChange={(v) => updatePlatform(i, 'visits', v)} inputClass="w-16 text-right" /></span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Link Clicks</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.click} onChange={(v) => updatePlatform(i, 'click', v)} inputClass="w-16 text-right" /></span></div>
-              <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                <span className="font-bold text-[#0A1F44] dark:text-white">Leads</span>
-                <span className="bg-[#F5A623] text-white px-2 py-1 rounded text-xs font-bold flex gap-1 items-center">
-                  <EditableField isEditing={isEditing} type="number" value={item.leads} onChange={(v) => updatePlatform(i, 'leads', v)} inputClass="w-10 bg-transparent border-white/50 text-white" /> 
-                  (<EditableField isEditing={isEditing} value={item.cr} onChange={(v) => updatePlatform(i, 'cr', v)} inputClass="w-12 bg-transparent border-white/50 text-white" />)
-                </span>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const RoadmapExecutionFull = ({ data, setData, isEditing }) => {
-  const updateRoadmap = (category, idx, field, val) => {
-    const updated = {...data};
-    updated[category][idx][field] = val;
-    setData(updated);
-  };
-
-  const renderSection = (title, items, category, colorClass, borderClass, bgClass, textClass, Icon) => (
-    <Card className={`border-t-4 ${borderClass}`}>
-      <div className="flex items-center gap-2 mb-4">
-        <div className={`p-2 rounded-lg ${bgClass} ${textClass}`}><Icon size={20} /></div>
-        <h2 className="text-xl font-bold dark:text-white">{title}</h2>
-      </div>
-      <div className="space-y-4 mt-6">
-        {items.map((item, i) => (
-          <div key={i}>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium dark:text-slate-300 w-3/5 truncate pr-2">
-                 <EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateRoadmap(category, i, 'name', v)} inputClass="w-full" />
-              </span>
-              <span className={`text-right ${textClass}`}>
-                 <EditableField isEditing={isEditing} value={item.status} onChange={(v) => updateRoadmap(category, i, 'status', v)} inputClass={`w-16 text-right bg-transparent text-${colorClass}-500`} />
-              </span>
-            </div>
-            <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full relative">
-              <div className={`h-full ${colorClass} rounded-full transition-all`} style={{ width: `${Math.min(100, item.value)}%` }}></div>
-              {isEditing && (
-                <input type="range" min="0" max="100" value={item.value} onChange={(e) => updateRoadmap(category, i, 'value', Number(e.target.value))} className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" />
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {renderSection('PROTECT', data.protect, 'protect', 'bg-rose-500', 'border-t-rose-500', 'bg-rose-100 dark:bg-rose-900/30', 'text-rose-600 dark:text-rose-400', Target)}
-      {renderSection('OPTIMIZE', data.optimize, 'optimize', 'bg-yellow-400', 'border-t-yellow-400', 'bg-yellow-100 dark:bg-yellow-900/30', 'text-yellow-600 dark:text-yellow-400', Activity)}
-      {renderSection('GROWTH', data.growth, 'growth', 'bg-emerald-500', 'border-t-emerald-500', 'bg-emerald-100 dark:bg-emerald-900/30', 'text-emerald-600 dark:text-emerald-400', ArrowUpRight)}
-    </div>
-  );
-};
-
-const TeamKPIFull = ({ data, setData, isEditing }) => {
-  const updateKPI = (team, idx, field, val) => {
-    const updated = {...data};
-    updated[team][idx][field] = val;
-    setData(updated);
-  };
-
-  const renderKPICard = (title, items, teamCode, Icon) => (
-    <Card className="border-t-4 border-[#0A1F44]">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2 dark:text-white"><Icon size={20} className="text-[#F5A623]"/> {title}</h3>
-      <ul className="space-y-3">
-        {items.map((item, i) => (
-          <li key={i} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded">
-            <span className="text-sm font-medium dark:text-slate-300">
-               <EditableField isEditing={isEditing} value={item.label} onChange={(v) => updateKPI(teamCode, i, 'label', v)} inputClass="w-32" />
-            </span>
-            <span className="font-bold text-[#0A1F44] dark:text-white text-right">
-               <EditableField isEditing={isEditing} value={item.val} onChange={(v) => updateKPI(teamCode, i, 'val', v)} inputClass="w-20 text-right" />
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {renderKPICard('CEO KPI', data.ceo, 'ceo', Briefcase)}
-      {renderKPICard('CMO KPI', data.cmo, 'cmo', Activity)}
-      {renderKPICard('AE / Sales KPI', data.ae, 'ae', Target)}
-      {renderKPICard('Client Success KPI', data.cs, 'cs', UserCheck)}
-      {renderKPICard('COO KPI', data.coo, 'coo', LayoutDashboard)}
-    </div>
-  );
-};
-
-const FinanceDashboardFull = ({ data, setData, isEditing }) => {
-  const updateFin = (field, val) => setData({...data, [field]: val});
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Total Revenue" rawValue={data.totalRev} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('totalRev', v)} icon={DollarSign} trend="up" />
-        <KPICard title="Gross Profit" rawValue={data.grossProfit} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('grossProfit', v)} icon={Activity} trend="up" colorClass="text-emerald-600" />
-        <KPICard title="Operating Expense" rawValue={data.opEx} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('opEx', v)} icon={ArrowDownRight} trend="down" colorClass="text-rose-600" />
-        <KPICard title="Net Profit" rawValue={data.netProfit} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('netProfit', v)} icon={ArrowUpRight} trend="up" colorClass="text-[#F5A623]" />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <SectionTitle title="Cash Flow Projection" subtitle="30 Days forecast" />
-          <div className="h-64 flex items-end gap-2 mt-4 relative">
-            {[40, 55, 45, 60, 80, 65, 70, 90, 85, 100].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col justify-end group">
-                <div className="w-full bg-[#0A1F44] dark:bg-blue-900 rounded-t-sm transition-all hover:bg-[#F5A623]" style={{ height: `${h}%` }}>
-                  <div className="opacity-0 group-hover:opacity-100 text-xs text-center -mt-6 font-bold dark:text-white transition-opacity">{h}M</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <div className="space-y-4">
-          {[
-             { label: 'Cash Position', field: 'cashPos', icon: DollarSign, color: 'text-emerald-500' },
-             { label: 'Accounts Receivable (A/R)', field: 'ar', icon: Download, color: 'text-[#F5A623]' },
-             { label: 'Accounts Payable (A/P)', field: 'ap', icon: UploadIcon, color: 'text-rose-500' },
-             { label: 'Monthly Burn Rate', field: 'burnRate', icon: Activity, color: 'text-slate-400 dark:text-white' },
-          ].map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <Card key={idx} className="bg-slate-50 dark:bg-slate-800/50 shadow-none border-none">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">{item.label}</p>
-                    <p className={`text-xl font-bold ${item.color.includes('emerald') ? '' : item.color} dark:text-white`}>
-                      <EditableField type="number" isEditing={isEditing} value={data[item.field]} onChange={(v) => updateFin(item.field, v)} prefix="Rp " inputClass="w-32" />
-                    </p>
-                  </div>
-                  <Icon className={item.color} />
                 </div>
               </Card>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Helper for Missing Icon
-const UploadIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
-
-// --- MAIN APPLICATION ---
-
-export default function App() {
-  const [activePage, setActivePage] = useState('Executive Summary');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
-  // STATE MANAGEMENT FOR ALL PAGES
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentPeriod, setCurrentPeriod] = useState('Juni 2026');
-  const [revenueData, setRevenueData] = useState(initialRevenueData);
-  const [funnelData, setFunnelData] = useState(initialFunnelData);
-  const [clientsData, setClientsData] = useState(initialClients);
-  const [strategicData, setStrategicData] = useState(initialStrategicRevenue);
-  const [projectData, setProjectData] = useState(initialProjectRevenue);
-  const [acquisitionData, setAcquisitionData] = useState(initialAcquisition);
-  const [marketingData, setMarketingData] = useState(initialMarketing);
-  const [roadmapData, setRoadmapData] = useState(initialRoadmap);
-  const [teamKpiData, setTeamKpiData] = useState(initialTeamKpi);
-  const [financeData, setFinanceData] = useState(initialFinance);
-
-  // --- FETCH DATA FROM GOOGLE SHEETS ---
-  useEffect(() => {
-    const fetchSheetData = async () => {
-      setIsLoading(true);
-      try {
-        // MENGGUNAKAN CORS PROXY JSON (Lebih stabil menghindari blokir browser)
-        const proxyUrl = 'https://api.allorigins.win/get?url=';
-        
-        const urls = [
-          proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv'),
-          proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv'),
-          proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv')
-        ];
-
-        const responses = await Promise.all(urls.map(url => fetch(url)));
-        const jsons = await Promise.all(responses.map(res => res.json()));
-        const texts = jsons.map(data => data.contents || "");
-
-        // Cek jika data kosong karena masalah jaringan
-        if (!texts[0]) throw new Error("Data tidak ditemukan dari Proxy");
-
-        // PEMBACA CSV YANG LEBIH PINTAR (Mengabaikan koma di dalam tanda kutip "")
-        const parseCSV = (csv) => {
-          const lines = csv.split(/\r?\n/).filter(line => line.trim());
-          if (lines.length < 2) return [];
-          
-          const headers = lines[0].split(',').map(h => h.trim());
-          
-          return lines.slice(1).map(line => {
-              const values = [];
-              let inQuotes = false;
-              let currentValue = '';
-              
-              for (let i = 0; i < line.length; i++) {
-                  const char = line[i];
-                  if (char === '"') {
-                      inQuotes = !inQuotes;
-                  } else if (char === ',' && !inQuotes) {
-                      values.push(currentValue);
-                      currentValue = '';
-                  } else {
-                      currentValue += char;
-                  }
-              }
-              values.push(currentValue); // masukkan nilai terakhir
-              
-              const row = {};
-              headers.forEach((header, index) => {
-                  row[header] = values[index] ? values[index].replace(/^"|"$/g, '').trim() : '';
-              });
-              return row;
-          });
+            </div>
+          );
         };
 
-        const parsedCore = parseCSV(texts[0]).map(item => ({
-          ...item, 
-          rev: Number(item.rev) || 0, 
-          score: Number(item.score) || 0
-        }));
-        
-        const parsedStrategic = parseCSV(texts[1]).map(item => ({
-          ...item, 
-          rev: Number(item.rev) || 0
-        }));
-        
-        const parsedProject = parseCSV(texts[2]).map(item => ({
-          ...item, 
-          rev: Number(item.rev) || 0
-        }));
+        const RevenueDashboardFull = ({ clients, setClients, strategic, setStrategic, project, setProject, isEditing }) => {
+          const updateClient = (idx, field, val) => { const updated = [...clients]; updated[idx][field] = val; setClients(updated); };
+          const updateStrategic = (idx, field, val) => { const updated = [...strategic]; updated[idx][field] = val; setStrategic(updated); };
+          const updateProject = (idx, field, val) => { const updated = [...project]; updated[idx][field] = val; setProject(updated); };
+          const totalCore = clients.reduce((acc, c) => acc + Number(c.rev), 0);
+          const totalStrategic = strategic.reduce((acc, s) => acc + Number(s.rev), 0);
+          const totalProject = project.reduce((acc, p) => acc + Number(p.rev), 0);
 
-        if (parsedCore.length > 0) setClientsData(parsedCore);
-        if (parsedStrategic.length > 0) setStrategicData(parsedStrategic);
-        if (parsedProject.length > 0) setProjectData(parsedProject);
-
-        // Update Total Revenue di Executive Summary secara otomatis berdasarkan Sheet
-        const totalCoreRev = parsedCore.reduce((sum, item) => sum + item.rev, 0);
-        const totalStratRev = parsedStrategic.reduce((sum, item) => sum + item.rev, 0);
-        const totalProjRev = parsedProject.reduce((sum, item) => sum + item.rev, 0);
-
-        setRevenueData(prev => ({
-          ...prev,
-          current: totalCoreRev + totalStratRev + totalProjRev,
-          activeClients: parsedCore.length
-        }));
-
-      } catch (error) {
-        console.error("Gagal mengambil data dari Google Sheets:", error);
-        // Fallback ke initial data jika jaringan/proxy diblokir
-        setClientsData(initialClients);
-        setStrategicData(initialStrategicRevenue);
-        setProjectData(initialProjectRevenue);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSheetData();
-  }, []);
-
-  useEffect(() => {
-    if (isDarkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [isDarkMode]);
-
-  const menuItems = [
-    { name: 'Executive Summary', icon: LayoutDashboard },
-    { name: 'Revenue Dashboard', icon: DollarSign },
-    { name: 'Sales Funnel', icon: Filter },
-    { name: 'Client Health Score', icon: Activity },
-    { name: 'Client Acquisition', icon: Users },
-    { name: 'Marketing Dashboard', icon: Target },
-    { name: 'Roadmap Execution', icon: Map },
-    { name: 'Team KPI', icon: Briefcase },
-    { name: 'Finance Dashboard', icon: BarChart2 },
-  ];
-
-  const renderContent = () => {
-    switch (activePage) {
-      case 'Executive Summary': return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
-      case 'Sales Funnel': return <SalesFunnel data={funnelData} setData={setFunnelData} isEditing={isEditing} />;
-      case 'Revenue Dashboard': return <RevenueDashboardFull clients={clientsData} setClients={setClientsData} strategic={strategicData} setStrategic={setStrategicData} project={projectData} setProject={setProjectData} isEditing={isEditing} />;
-      case 'Client Health Score': return <ClientHealthFull clients={clientsData} setClients={setClientsData} isEditing={isEditing} />;
-      case 'Client Acquisition': return <ClientAcquisitionFull data={acquisitionData} setData={setAcquisitionData} isEditing={isEditing} />;
-      case 'Marketing Dashboard': return <MarketingDashboardFull data={marketingData} setData={setMarketingData} isEditing={isEditing} />;
-      case 'Roadmap Execution': return <RoadmapExecutionFull data={roadmapData} setData={setRoadmapData} isEditing={isEditing} />;
-      case 'Team KPI': return <TeamKPIFull data={teamKpiData} setData={setTeamKpiData} isEditing={isEditing} />;
-      case 'Finance Dashboard': return <FinanceDashboardFull data={financeData} setData={setFinanceData} isEditing={isEditing} />;
-      default: return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
-    }
-  };
-
-  return (
-    <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
-      
-      {/* SIDEBAR */}
-      <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64 bg-[#0A1F44] border-r border-[#1a3668] flex flex-col`}>
-        <div className="h-16 flex items-center px-6 border-b border-white/10">
-          <h1 className="text-white font-black text-xl tracking-tight">LAGIKREATIF</h1>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Command Center</p>
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.name;
-            return (
-              <button
-                key={item.name}
-                onClick={() => { setActivePage(item.name); if(window.innerWidth < 1024) setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? 'bg-[#F5A623] text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
-              >
-                <Icon size={18} className="mr-3" /> {item.name}
-              </button>
-            )
-          })}
-        </div>
-        
-        <div className="p-4 border-t border-white/10">
-          <div className="bg-white/5 rounded-lg p-3 text-center">
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Tagline</p>
-            <p className="text-sm font-semibold text-[#F5A623] mt-1">Protect Revenue<br/>Before Growth</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT */}
-      <div className={`${isSidebarOpen ? 'lg:ml-64' : ''} transition-all duration-300 flex flex-col min-h-screen`}>
-        
-        {/* HEADER */}
-        <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg lg:hidden"><Menu size={20} /></button>
-            <div className="hidden md:flex items-center gap-3">
-              <h2 className="text-lg font-bold text-[#0A1F44] dark:text-white">{activePage}</h2>
-              <div className="flex items-center text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
-                <Calendar size={14} className="mr-2 text-[#F5A623]" />
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    value={currentPeriod} 
-                    onChange={(e) => setCurrentPeriod(e.target.value)} 
-                    className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors"
-                    placeholder="Misal: Juni 2026"
-                  />
-                ) : (
-                  <span>Periode: {currentPeriod}</span>
-                )}
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                  <SectionTitle title="Core Recurring Revenue" subtitle="Pendapatan tetap bulanan / tahunan dari klien aktif" />
+                  <div className="space-y-4">
+                     {clients.filter(c => c.rev >= 0).map((client, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="w-40 font-medium text-sm dark:text-slate-300"><EditableField isEditing={isEditing} value={client.name} onChange={(v) => updateClient(i, 'name', v)} inputClass="w-full" /></div>
+                          <div className="flex-1 mx-4 h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden hidden sm:block"><div className="h-full bg-[#0A1F44] rounded-full transition-all" style={{ width: `${Math.min(100, (client.rev / 15000000) * 100)}%` }}></div></div>
+                          <div className="w-36 text-right font-bold text-sm dark:text-white"><EditableField isEditing={isEditing} type="number" prefix="Rp " value={client.rev} onChange={(v) => updateClient(i, 'rev', v)} className="" inputClass="w-28 text-right" /></div>
+                        </div>
+                     ))}
+                     <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between"><div className="w-32 font-bold text-sm text-[#F5A623]">TOTAL CORE</div><div className="flex-1 mx-4"></div><div className="w-36 text-right font-bold text-sm text-[#F5A623]">{formatIDR(totalCore)}</div></div>
+                     </div>
+                  </div>
+                </Card>
+                <div className="space-y-6">
+                  <Card className="bg-gradient-to-br from-[#0A1F44] to-[#1a3668] text-white border-none shadow-lg">
+                    <h3 className="font-bold text-lg mb-4 text-[#F5A623]">Strategic Revenue</h3>
+                    <div className="space-y-3 text-sm">
+                      {strategic.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center pb-3 border-b border-white/10 last:border-0">
+                          <span className="w-3/5"><EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateStrategic(i, 'name', v)} inputClass="w-full bg-transparent border-white/30 text-white" /></span>
+                          <span className="font-bold text-right w-2/5"><EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateStrategic(i, 'rev', v)} inputClass="w-20 bg-transparent border-white/30 text-white text-right" /></span>
+                        </div>
+                      ))}
+                      <div className="pt-3 mt-1 border-t-2 border-white/20"><div className="flex items-center justify-between"><span className="font-bold text-[#F5A623]">TOTAL STRATEGIC</span><span className="font-bold text-[#F5A623]">{formatIDR(totalStrategic)}</span></div></div>
+                    </div>
+                  </Card>
+                  <Card className="shadow-md border-t-4 border-t-[#0A1F44]">
+                    <h3 className="font-bold text-lg mb-4 dark:text-white">Project Revenue</h3>
+                    <div className="space-y-3 text-sm">
+                      {project.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                          <span className="w-3/5 font-medium text-slate-600 dark:text-slate-300"><EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateProject(i, 'name', v)} inputClass="w-full" /></span>
+                          <span className="font-bold text-[#0A1F44] dark:text-white text-right w-2/5"><EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateProject(i, 'rev', v)} inputClass="w-20 text-right" /></span>
+                        </div>
+                      ))}
+                      <div className="pt-3 mt-1 border-t border-slate-200 dark:border-slate-600"><div className="flex items-center justify-between"><span className="font-bold text-[#0A1F44] dark:text-white">TOTAL PROJECT</span><span className="font-bold text-[#0A1F44] dark:text-white">{formatIDR(totalProject)}</span></div></div>
+                    </div>
+                  </Card>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* GLOBAL EDIT MODE TOGGLE */}
-            <button 
-              onClick={() => setIsEditing(!isEditing)} 
-              className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-md transition-all ${
-                isEditing ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
-              }`}
-            >
-              {isEditing ? <Check size={16} /> : <Edit3 size={16} />}
-              {isEditing ? 'Selesai Edit' : 'Edit Data'}
-            </button>
+          );
+        };
 
-            <div className="hidden lg:flex items-center gap-2 mx-2 border-r border-slate-200 dark:border-slate-700 pr-4">
-               <button className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#0A1F44] dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-md"><Filter size={14} /> Filter</button>
+        const SalesFunnel = ({ data, setData, isEditing }) => {
+          const maxCount = data[0].count || 1;
+          const updateStage = (index, field, value) => { const newData = [...data]; newData[index][field] = value; newData[index].gap = newData[index].count - newData[index].target; setData(newData); };
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <SectionTitle title="Visual Funnel" subtitle="Konversi tahapan sales pipeline" />
+                <div className="flex flex-col items-center w-full py-4 space-y-1">
+                  {data.map((step, index) => {
+                    const width = Math.max(15, (step.count / maxCount) * 100);
+                    const isLast = index === data.length - 1;
+                    const bgClass = index < 3 ? 'bg-[#0A1F44]' : index < 5 ? 'bg-[#1a3668]' : 'bg-[#F5A623]';
+                    return (
+                      <div key={index} className="w-full flex flex-col items-center">
+                        <div className={`${bgClass} text-white flex justify-between items-center px-4 py-3 shadow-sm transition-all hover:scale-[1.02]`} style={{ width: `${width}%`, borderTopLeftRadius: index === 0 ? '8px' : '0', borderTopRightRadius: index === 0 ? '8px' : '0', borderBottomLeftRadius: isLast ? '8px' : '4px', borderBottomRightRadius: isLast ? '8px' : '4px', clipPath: isLast ? 'none' : 'polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%)' }}><span className="text-xs md:text-sm font-medium truncate pr-2">{step.stage}</span><span className="font-bold">{step.count}</span></div>
+                        {!isLast && <div className="text-xs text-slate-400 my-1 flex items-center"><ArrowDownRight size={12} className="mr-1" /> {data[index + 1].conv}</div>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+              <Card>
+                 <SectionTitle title="Pipeline Metrics" subtitle="Target vs Actual Gap Analysis" />
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-sm text-left">
+                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400"><tr><th className="px-4 py-3 rounded-tl-lg">Stage</th><th className="px-4 py-3">Actual</th><th className="px-4 py-3">Target</th><th className="px-4 py-3 rounded-tr-lg">Gap</th></tr></thead>
+                     <tbody>
+                       {data.map((row, i) => (
+                         <tr key={i} className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                           <td className="px-4 py-3 font-medium dark:text-slate-300"><EditableField isEditing={isEditing} value={row.stage} onChange={(v) => updateStage(i, 'stage', v)} /></td>
+                           <td className="px-4 py-3 font-bold dark:text-white"><EditableField type="number" isEditing={isEditing} value={row.count} onChange={(v) => updateStage(i, 'count', v)} inputClass="w-16" /></td>
+                           <td className="px-4 py-3 text-slate-500 dark:text-slate-400"><EditableField type="number" isEditing={isEditing} value={row.target} onChange={(v) => updateStage(i, 'target', v)} inputClass="w-16" /></td>
+                           <td className={`px-4 py-3 font-bold ${row.gap < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{row.gap > 0 ? `+${row.gap}` : row.gap}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+              </Card>
             </div>
+          );
+        };
 
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 rounded-full transition-colors">
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            
-            <button className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 rounded-full relative transition-colors hidden sm:block">
-              <Bell size={20} /> <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
-            </button>
-            
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#0A1F44] to-[#F5A623] flex items-center justify-center text-white font-bold text-sm ml-2 shadow-sm">CEO</div>
-          </div>
-        </header>
-
-        {/* QUOTE BANNER */}
-        <div className="bg-[#0A1F44] text-white px-6 py-3 shadow-md flex items-center justify-center text-center">
-           <p className="text-sm md:text-base font-medium italic tracking-wide text-slate-200">
-             "Revenue is not a result of activity. <span className="text-[#F5A623] font-bold">Revenue is a result of the right activity.</span>"
-           </p>
-        </div>
-
-        {/* PAGE CONTENT */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 w-full max-w-7xl mx-auto">
-          <div className="md:hidden mb-6 flex flex-col gap-3">
-             <div className="flex justify-between items-center"><h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">{activePage}</h2></div>
-             <div className="flex items-center w-max text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
-                <Calendar size={14} className="mr-2 text-[#F5A623]" />
-                {isEditing ? (
-                  <input 
-                    type="text" 
-                    value={currentPeriod} 
-                    onChange={(e) => setCurrentPeriod(e.target.value)} 
-                    className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors"
-                  />
-                ) : (
-                  <span>Periode: {currentPeriod}</span>
-                )}
+        const ClientHealthFull = ({ clients, setClients, isEditing }) => {
+          const updateClient = (idx, field, val) => { const updated = [...clients]; updated[idx][field] = val; setClients(updated); };
+          const getHealthBadge = (health) => {
+            switch(health) {
+              case 'Hijau': return <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full text-xs font-bold">Hijau</span>;
+              case 'Kuning': return <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 rounded-full text-xs font-bold">Kuning</span>;
+              case 'Merah': return <span className="px-2.5 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 rounded-full text-xs font-bold">Merah</span>;
+              default: return null;
+            }
+          };
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"><h3 className="text-emerald-800 dark:text-emerald-400 font-bold text-lg">Client Sehat</h3><p className="text-3xl font-black text-emerald-600 dark:text-emerald-500 mt-2">{clients.filter(c => c.health === 'Hijau').length}</p></Card>
+                 <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"><h3 className="text-yellow-800 dark:text-yellow-400 font-bold text-lg">Perlu Perhatian</h3><p className="text-3xl font-black text-yellow-600 dark:text-yellow-500 mt-2">{clients.filter(c => c.health === 'Kuning').length}</p></Card>
+                 <Card className="bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800"><h3 className="text-rose-800 dark:text-rose-400 font-bold text-lg">Risiko Tinggi</h3><p className="text-3xl font-black text-rose-600 dark:text-rose-500 mt-2">{clients.filter(c => c.health === 'Merah').length}</p></Card>
               </div>
-          </div>
+              <Card>
+                <SectionTitle title="Client Health Roster" subtitle="Monitoring status dan risiko per klien" />
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400"><tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Score</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Renewal Date</th><th className="px-4 py-3">Next Action</th></tr></thead>
+                     <tbody>
+                       {clients.map((client, i) => (
+                         <tr key={i} className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                           <td className="px-4 py-3 font-bold dark:text-white"><EditableField isEditing={isEditing} value={client.name} onChange={(v) => updateClient(i, 'name', v)} /></td>
+                           <td className="px-4 py-3">
+                             <div className="flex items-center gap-2">
+                               <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block"><div className={`h-full ${client.health === 'Hijau' ? 'bg-emerald-500' : client.health === 'Kuning' ? 'bg-yellow-400' : 'bg-rose-500'}`} style={{ width: `${client.score}%` }}></div></div>
+                               <EditableField type="number" isEditing={isEditing} value={client.score} onChange={(v) => updateClient(i, 'score', v)} inputClass="w-16 font-bold" className="text-xs font-bold dark:text-slate-400" />
+                             </div>
+                           </td>
+                           <td className="px-4 py-3">
+                             {isEditing ? (
+                               <select value={client.health} onChange={(e) => updateClient(i, 'health', e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm focus:outline-none dark:text-white"><option value="Hijau">Hijau</option><option value="Kuning">Kuning</option><option value="Merah">Merah</option></select>
+                             ) : getHealthBadge(client.health)}
+                           </td>
+                           <td className="px-4 py-3 text-slate-500 dark:text-slate-400"><EditableField isEditing={isEditing} value={client.renewal} onChange={(v) => updateClient(i, 'renewal', v)} /></td>
+                           <td className="px-4 py-3 text-[#0A1F44] dark:text-[#F5A623] font-medium"><EditableField isEditing={isEditing} value={client.action} onChange={(v) => updateClient(i, 'action', v)} /></td>
+                         </tr>
+                       ))}
+                     </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          );
+        };
+
+        const ClientAcquisitionFull = ({ data, setData, isEditing }) => {
+          const updateAcq = (idx, field, val) => { const updated = [...data]; updated[idx][field] = val; setData(updated); };
+          const totalLeads = data.reduce((sum, item) => sum + Number(item.leads), 0);
+          const totalMeeting = data.reduce((sum, item) => sum + Number(item.meeting), 0);
+          const totalOpp = data.reduce((sum, item) => sum + Number(item.opp), 0);
+          const totalProp = data.reduce((sum, item) => sum + Number(item.prop), 0);
+          const totalClose = data.reduce((sum, item) => sum + Number(item.close), 0);
+
+          return (
+            <div className="space-y-6">
+              <Card>
+                <SectionTitle title="Acquisition Channels" subtitle="Distribusi channel dan kontribusi revenue" />
+                <div className="space-y-6">
+                  {data.map((item, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between items-end mb-2">
+                        <div className="flex-1 mr-4">
+                          <h4 className="font-bold text-[#0A1F44] dark:text-white mb-1"><EditableField isEditing={isEditing} value={item.channel} onChange={(v) => updateAcq(i, 'channel', v)} inputClass="w-full" /></h4>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1"><EditableField isEditing={isEditing} type="number" value={item.leads} onChange={(v) => updateAcq(i, 'leads', v)} inputClass="w-12" /> Leads → <EditableField isEditing={isEditing} type="number" value={item.close} onChange={(v) => updateAcq(i, 'close', v)} inputClass="w-12" /> Closing</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-[#F5A623]"><EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateAcq(i, 'rev', v)} /></div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex justify-end"><EditableField isEditing={isEditing} type="number" value={item.percentage} onChange={(v) => updateAcq(i, 'percentage', v)} suffix="%" inputClass="w-12 text-right" /> Share</div>
+                        </div>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div className="h-full bg-[#0A1F44] rounded-full" style={{ width: `${item.percentage}%` }}></div></div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Total Leads</p><p className="text-xl font-bold dark:text-white">{totalLeads}</p></Card>
+                <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Meetings</p><p className="text-xl font-bold dark:text-white">{totalMeeting}</p></Card>
+                <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Opportunity</p><p className="text-xl font-bold dark:text-white">{totalOpp}</p></Card>
+                <Card className="text-center"><p className="text-xs text-slate-500 mb-1">Proposal</p><p className="text-xl font-bold dark:text-white">{totalProp}</p></Card>
+                <Card className="text-center border-emerald-200 dark:border-emerald-800"><p className="text-xs text-slate-500 mb-1">Closing</p><p className="text-xl font-bold text-[#F5A623]">{totalClose}</p></Card>
+              </div>
+            </div>
+          );
+        };
+
+        const MarketingDashboardFull = ({ data, setData, isEditing }) => {
+          const updateMain = (field, val) => setData({...data, main: {...data.main, [field]: val}});
+          const updatePlatform = (idx, field, val) => { const updatedPlatforms = [...data.platforms]; updatedPlatforms[idx][field] = val; setData({...data, platforms: updatedPlatforms}); };
+
+          return (
+            <div className="space-y-6">
+              <div className="bg-[#0A1F44] text-white rounded-xl p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10"><Activity size={120} /></div>
+                <h2 className="text-2xl font-bold mb-2 relative z-10">Fokus Utama: Leads Generated</h2>
+                <p className="text-slate-300 mb-6 max-w-lg relative z-10">Marketing difokuskan pada konversi nyata, bukan vanity metrics. Seluruh aktivitas diukur dari kemampuannya menghasilkan leads berkualitas untuk pipeline sales.</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20"><p className="text-sm text-slate-300">Total Leads</p><p className="text-3xl font-bold text-[#F5A623] mt-1"><EditableField isEditing={isEditing} type="number" value={data.main.leads} onChange={(v) => updateMain('leads', v)} inputClass="w-20 bg-transparent text-[#F5A623] border-white/30" /></p></div>
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20"><p className="text-sm text-slate-300">Avg. Conversion Rate</p><p className="text-3xl font-bold mt-1 flex items-center"><EditableField isEditing={isEditing} type="number" value={data.main.cr} onChange={(v) => updateMain('cr', v)} inputClass="w-20 bg-transparent text-white border-white/30" /> %</p></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {data.platforms.map((item, i) => (
+                  <Card key={i}>
+                    <h3 className="font-bold text-lg mb-4 text-[#0A1F44] dark:text-white border-b pb-2 dark:border-slate-700"><EditableField isEditing={isEditing} value={item.platform} onChange={(v) => updatePlatform(i, 'platform', v)} inputClass="w-full" /></h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm"><span className="text-slate-500">Reach</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.reach} onChange={(v) => updatePlatform(i, 'reach', v)} inputClass="w-16 text-right" /></span></div>
+                      <div className="flex justify-between text-sm"><span className="text-slate-500">Profile Visit</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.visits} onChange={(v) => updatePlatform(i, 'visits', v)} inputClass="w-16 text-right" /></span></div>
+                      <div className="flex justify-between text-sm"><span className="text-slate-500">Link Clicks</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.click} onChange={(v) => updatePlatform(i, 'click', v)} inputClass="w-16 text-right" /></span></div>
+                      <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center"><span className="font-bold text-[#0A1F44] dark:text-white">Leads</span><span className="bg-[#F5A623] text-white px-2 py-1 rounded text-xs font-bold flex gap-1 items-center"><EditableField isEditing={isEditing} type="number" value={item.leads} onChange={(v) => updatePlatform(i, 'leads', v)} inputClass="w-10 bg-transparent border-white/50 text-white" /> (<EditableField isEditing={isEditing} value={item.cr} onChange={(v) => updatePlatform(i, 'cr', v)} inputClass="w-12 bg-transparent border-white/50 text-white" />)</span></div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          );
+        };
+
+        const RoadmapExecutionFull = ({ data, setData, isEditing }) => {
+          const updateRoadmap = (category, idx, field, val) => { const updated = {...data}; updated[category][idx][field] = val; setData(updated); };
+          const renderSection = (title, items, category, colorClass, borderClass, bgClass, textClass, Icon) => (
+            <Card className={`border-t-4 ${borderClass}`}>
+              <div className="flex items-center gap-2 mb-4"><div className={`p-2 rounded-lg ${bgClass} ${textClass}`}><Icon size={20} /></div><h2 className="text-xl font-bold dark:text-white">{title}</h2></div>
+              <div className="space-y-4 mt-6">
+                {items.map((item, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between text-sm mb-1"><span className="font-medium dark:text-slate-300 w-3/5 truncate pr-2"><EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateRoadmap(category, i, 'name', v)} inputClass="w-full" /></span><span className={`text-right ${textClass}`}><EditableField isEditing={isEditing} value={item.status} onChange={(v) => updateRoadmap(category, i, 'status', v)} inputClass={`w-16 text-right bg-transparent text-${colorClass}-500`} /></span></div>
+                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full relative"><div className={`h-full ${colorClass} rounded-full transition-all`} style={{ width: `${Math.min(100, item.value)}%` }}></div>{isEditing && (<input type="range" min="0" max="100" value={item.value} onChange={(e) => updateRoadmap(category, i, 'value', Number(e.target.value))} className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" />)}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {renderSection('PROTECT', data.protect, 'protect', 'bg-rose-500', 'border-t-rose-500', 'bg-rose-100 dark:bg-rose-900/30', 'text-rose-600 dark:text-rose-400', Target)}
+              {renderSection('OPTIMIZE', data.optimize, 'optimize', 'bg-yellow-400', 'border-t-yellow-400', 'bg-yellow-100 dark:bg-yellow-900/30', 'text-yellow-600 dark:text-yellow-400', Activity)}
+              {renderSection('GROWTH', data.growth, 'growth', 'bg-emerald-500', 'border-t-emerald-500', 'bg-emerald-100 dark:bg-emerald-900/30', 'text-emerald-600 dark:text-emerald-400', ArrowUpRight)}
+            </div>
+          );
+        };
+
+        const TeamKPIFull = ({ data, setData, isEditing }) => {
+          const updateKPI = (team, idx, field, val) => { const updated = {...data}; updated[team][idx][field] = val; setData(updated); };
+          const renderKPICard = (title, items, teamCode, Icon) => (
+            <Card className="border-t-4 border-[#0A1F44]">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 dark:text-white"><Icon size={20} className="text-[#F5A623]"/> {title}</h3>
+              <ul className="space-y-3">
+                {items.map((item, i) => (
+                  <li key={i} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded"><span className="text-sm font-medium dark:text-slate-300"><EditableField isEditing={isEditing} value={item.label} onChange={(v) => updateKPI(teamCode, i, 'label', v)} inputClass="w-32" /></span><span className="font-bold text-[#0A1F44] dark:text-white text-right"><EditableField isEditing={isEditing} value={item.val} onChange={(v) => updateKPI(teamCode, i, 'val', v)} inputClass="w-20 text-right" /></span></li>
+                ))}
+              </ul>
+            </Card>
+          );
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {renderKPICard('CEO KPI', data.ceo, 'ceo', Briefcase)}
+              {renderKPICard('CMO KPI', data.cmo, 'cmo', Activity)}
+              {renderKPICard('AE / Sales KPI', data.ae, 'ae', Target)}
+              {renderKPICard('Client Success KPI', data.cs, 'cs', UserCheck)}
+              {renderKPICard('COO KPI', data.coo, 'coo', LayoutDashboard)}
+            </div>
+          );
+        };
+
+        const FinanceDashboardFull = ({ data, setData, isEditing }) => {
+          const updateFin = (field, val) => setData({...data, [field]: val});
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <KPICard title="Total Revenue" rawValue={data.totalRev} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('totalRev', v)} icon={DollarSign} trend="up" />
+                <KPICard title="Gross Profit" rawValue={data.grossProfit} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('grossProfit', v)} icon={Activity} trend="up" colorClass="text-emerald-600" />
+                <KPICard title="Operating Expense" rawValue={data.opEx} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('opEx', v)} icon={ArrowDownRight} trend="down" colorClass="text-rose-600" />
+                <KPICard title="Net Profit" rawValue={data.netProfit} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('netProfit', v)} icon={ArrowUpRight} trend="up" colorClass="text-[#F5A623]" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                  <SectionTitle title="Cash Flow Projection" subtitle="30 Days forecast" />
+                  <div className="h-64 flex items-end gap-2 mt-4 relative">
+                    {[40, 55, 45, 60, 80, 65, 70, 90, 85, 100].map((h, i) => (
+                      <div key={i} className="flex-1 flex flex-col justify-end group"><div className="w-full bg-[#0A1F44] dark:bg-blue-900 rounded-t-sm transition-all hover:bg-[#F5A623]" style={{ height: `${h}%` }}><div className="opacity-0 group-hover:opacity-100 text-xs text-center -mt-6 font-bold dark:text-white transition-opacity">{h}M</div></div></div>
+                    ))}
+                  </div>
+                </Card>
+                <div className="space-y-4">
+                  {[
+                     { label: 'Cash Position', field: 'cashPos', icon: DollarSign, color: 'text-emerald-500' },
+                     { label: 'Accounts Receivable (A/R)', field: 'ar', icon: Download, color: 'text-[#F5A623]' },
+                     { label: 'Accounts Payable (A/P)', field: 'ap', icon: UploadIcon, color: 'text-rose-500' },
+                     { label: 'Monthly Burn Rate', field: 'burnRate', icon: Activity, color: 'text-slate-400 dark:text-white' },
+                  ].map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <Card key={idx} className="bg-slate-50 dark:bg-slate-800/50 shadow-none border-none">
+                        <div className="flex justify-between items-center">
+                          <div><p className="text-xs text-slate-500 mb-1">{item.label}</p><p className={`text-xl font-bold ${item.color.includes('emerald') ? '' : item.color} dark:text-white`}><EditableField type="number" isEditing={isEditing} value={data[item.field]} onChange={(v) => updateFin(item.field, v)} prefix="Rp " inputClass="w-32" /></p></div>
+                          <Icon className={item.color} />
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+
+        // --- MAIN APP COMPONENT ---
+        function App() {
+          const [activePage, setActivePage] = useState('Executive Summary');
+          const [isDarkMode, setIsDarkMode] = useState(false);
+          const [isSidebarOpen, setIsSidebarOpen] = useState(true);
           
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center h-64">
-                <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-[#F5A623] rounded-full animate-spin"></div>
-                <p className="mt-4 font-semibold text-slate-500 dark:text-slate-400">Menyinkronkan data dari Google Sheets...</p>
+          const [isEditing, setIsEditing] = useState(false);
+          const [isLoading, setIsLoading] = useState(true);
+          const [currentPeriod, setCurrentPeriod] = useState('Juni 2026');
+          
+          const [revenueData, setRevenueData] = useState(initialRevenueData);
+          const [funnelData, setFunnelData] = useState(initialFunnelData);
+          const [clientsData, setClientsData] = useState(initialClients);
+          const [strategicData, setStrategicData] = useState(initialStrategicRevenue);
+          const [projectData, setProjectData] = useState(initialProjectRevenue);
+          const [acquisitionData, setAcquisitionData] = useState(initialAcquisition);
+          const [marketingData, setMarketingData] = useState(initialMarketing);
+          const [roadmapData, setRoadmapData] = useState(initialRoadmap);
+          const [teamKpiData, setTeamKpiData] = useState(initialTeamKpi);
+          const [financeData, setFinanceData] = useState(initialFinance);
+
+          useEffect(() => {
+            const fetchSheetData = async () => {
+              setIsLoading(true);
+              try {
+                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                const urls = [
+                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv'),
+                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv'),
+                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv')
+                ];
+
+                const responses = await Promise.all(urls.map(url => fetch(url)));
+                const jsons = await Promise.all(responses.map(res => res.json()));
+                const texts = jsons.map(data => data.contents || "");
+
+                if (!texts[0]) throw new Error("Data tidak ditemukan dari Proxy");
+
+                const parseCSV = (csv) => {
+                  const lines = csv.split(/\r?\n/).filter(line => line.trim());
+                  if (lines.length < 2) return [];
+                  
+                  const headers = lines[0].split(',').map(h => h.trim());
+                  
+                  return lines.slice(1).map(line => {
+                      const values = [];
+                      let inQuotes = false;
+                      let currentValue = '';
+                      for (let i = 0; i < line.length; i++) {
+                          const char = line[i];
+                          if (char === '"') inQuotes = !inQuotes;
+                          else if (char === ',' && !inQuotes) { values.push(currentValue); currentValue = ''; }
+                          else currentValue += char;
+                      }
+                      values.push(currentValue);
+                      const row = {};
+                      headers.forEach((header, index) => {
+                          row[header] = values[index] ? values[index].replace(/^"|"$/g, '').trim() : '';
+                      });
+                      return row;
+                  });
+                };
+
+                const parsedCore = parseCSV(texts[0]).map(item => ({ ...item, rev: Number(item.rev) || 0, score: Number(item.score) || 0 }));
+                const parsedStrategic = parseCSV(texts[1]).map(item => ({ ...item, rev: Number(item.rev) || 0 }));
+                const parsedProject = parseCSV(texts[2]).map(item => ({ ...item, rev: Number(item.rev) || 0 }));
+
+                if (parsedCore.length > 0) setClientsData(parsedCore);
+                if (parsedStrategic.length > 0) setStrategicData(parsedStrategic);
+                if (parsedProject.length > 0) setProjectData(parsedProject);
+
+                const totalCoreRev = parsedCore.reduce((sum, item) => sum + item.rev, 0);
+                const totalStratRev = parsedStrategic.reduce((sum, item) => sum + item.rev, 0);
+                const totalProjRev = parsedProject.reduce((sum, item) => sum + item.rev, 0);
+
+                setRevenueData(prev => ({
+                  ...prev,
+                  current: totalCoreRev + totalStratRev + totalProjRev,
+                  activeClients: parsedCore.length
+                }));
+              } catch (error) {
+                console.error("Gagal mengambil data dari Google Sheets:", error);
+                setClientsData(initialClients);
+                setStrategicData(initialStrategicRevenue);
+                setProjectData(initialProjectRevenue);
+              } finally {
+                setIsLoading(false);
+              }
+            };
+            fetchSheetData();
+          }, []);
+
+          useEffect(() => {
+            if (isDarkMode) document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+          }, [isDarkMode]);
+
+          const menuItems = [
+            { name: 'Executive Summary', icon: LayoutDashboard }, { name: 'Revenue Dashboard', icon: DollarSign },
+            { name: 'Sales Funnel', icon: Filter }, { name: 'Client Health Score', icon: Activity },
+            { name: 'Client Acquisition', icon: Users }, { name: 'Marketing Dashboard', icon: Target },
+            { name: 'Roadmap Execution', icon: Map }, { name: 'Team KPI', icon: Briefcase },
+            { name: 'Finance Dashboard', icon: BarChart2 },
+          ];
+
+          const renderContent = () => {
+            switch (activePage) {
+              case 'Executive Summary': return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
+              case 'Sales Funnel': return <SalesFunnel data={funnelData} setData={setFunnelData} isEditing={isEditing} />;
+              case 'Revenue Dashboard': return <RevenueDashboardFull clients={clientsData} setClients={setClientsData} strategic={strategicData} setStrategic={setStrategicData} project={projectData} setProject={setProjectData} isEditing={isEditing} />;
+              case 'Client Health Score': return <ClientHealthFull clients={clientsData} setClients={setClientsData} isEditing={isEditing} />;
+              case 'Client Acquisition': return <ClientAcquisitionFull data={acquisitionData} setData={setAcquisitionData} isEditing={isEditing} />;
+              case 'Marketing Dashboard': return <MarketingDashboardFull data={marketingData} setData={setMarketingData} isEditing={isEditing} />;
+              case 'Roadmap Execution': return <RoadmapExecutionFull data={roadmapData} setData={setRoadmapData} isEditing={isEditing} />;
+              case 'Team KPI': return <TeamKPIFull data={teamKpiData} setData={setTeamKpiData} isEditing={isEditing} />;
+              case 'Finance Dashboard': return <FinanceDashboardFull data={financeData} setData={setFinanceData} isEditing={isEditing} />;
+              default: return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
+            }
+          };
+
+          return (
+            <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
+              <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64 bg-[#0A1F44] border-r border-[#1a3668] flex flex-col`}>
+                <div className="h-16 flex items-center px-6 border-b border-white/10"><h1 className="text-white font-black text-xl tracking-tight">LAGIKREATIF</h1></div>
+                <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                  <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Command Center</p>
+                  {menuItems.map((item) => {
+                    const Icon = item.icon; const isActive = activePage === item.name;
+                    return (
+                      <button key={item.name} onClick={() => { setActivePage(item.name); if(window.innerWidth < 1024) setIsSidebarOpen(false); }} className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? 'bg-[#F5A623] text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}>
+                        <Icon size={18} className="mr-3" /> {item.name}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="p-4 border-t border-white/10">
+                  <div className="bg-white/5 rounded-lg p-3 text-center">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Tagline</p>
+                    <p className="text-sm font-semibold text-[#F5A623] mt-1">Protect Revenue<br/>Before Growth</p>
+                  </div>
+                </div>
+              </aside>
+
+              <div className={`${isSidebarOpen ? 'lg:ml-64' : ''} transition-all duration-300 flex flex-col min-h-screen`}>
+                <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 sticky top-0 z-30">
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg lg:hidden"><Menu size={20} /></button>
+                    <div className="hidden md:flex items-center gap-3">
+                      <h2 className="text-lg font-bold text-[#0A1F44] dark:text-white">{activePage}</h2>
+                      <div className="flex items-center text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <Calendar size={14} className="mr-2 text-[#F5A623]" />
+                        {isEditing ? (
+                          <input type="text" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors" placeholder="Misal: Juni 2026" />
+                        ) : (<span>Periode: {currentPeriod}</span>)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-md transition-all ${isEditing ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}>
+                      {isEditing ? <Check size={16} /> : <Edit3 size={16} />} {isEditing ? 'Selesai Edit' : 'Edit Data'}
+                    </button>
+                    <div className="hidden lg:flex items-center gap-2 mx-2 border-r border-slate-200 dark:border-slate-700 pr-4">
+                       <button className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#0A1F44] dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-md"><Filter size={14} /> Filter</button>
+                    </div>
+                    <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 rounded-full transition-colors">
+                      {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <button className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 rounded-full relative transition-colors hidden sm:block">
+                      <Bell size={20} /> <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+                    </button>
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#0A1F44] to-[#F5A623] flex items-center justify-center text-white font-bold text-sm ml-2 shadow-sm">CEO</div>
+                  </div>
+                </header>
+
+                <div className="bg-[#0A1F44] text-white px-6 py-3 shadow-md flex items-center justify-center text-center">
+                   <p className="text-sm md:text-base font-medium italic tracking-wide text-slate-200">"Revenue is not a result of activity. <span className="text-[#F5A623] font-bold">Revenue is a result of the right activity.</span>"</p>
+                </div>
+
+                <main className="flex-1 p-4 md:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+                  <div className="md:hidden mb-6 flex flex-col gap-3">
+                     <div className="flex justify-between items-center"><h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">{activePage}</h2></div>
+                     <div className="flex items-center w-max text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <Calendar size={14} className="mr-2 text-[#F5A623]" />
+                        {isEditing ? (
+                          <input type="text" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors" />
+                        ) : (<span>Periode: {currentPeriod}</span>)}
+                      </div>
+                  </div>
+                  
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {isLoading ? (
+                      <div className="flex flex-col items-center justify-center h-64">
+                        <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-[#F5A623] rounded-full animate-spin"></div>
+                        <p className="mt-4 font-semibold text-slate-500 dark:text-slate-400">Menyinkronkan data dari Google Sheets...</p>
+                      </div>
+                    ) : renderContent()}
+                  </div>
+                </main>
               </div>
-            ) : renderContent()}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
-}
+            </div>
+          );
+        }
+
+        // Jalankan Aplikasi
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
