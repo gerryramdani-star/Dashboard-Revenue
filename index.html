@@ -31,34 +31,15 @@
           Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar
         } from 'https://esm.sh/lucide-react@0.292.0';
 
-        // --- INITIAL MOCK DATA (DIKEMBALIKAN SEBAGAI CADANGAN SAAT OFFLINE) ---
-        const initialRevenueData = { current: 65500000, target: 120000000, activeClients: 14, targetNew: 3, renewalRate: 90, healthScore: 80, forecast: 85000000 };
+        // --- INITIAL DATA PENGGANTI SAAT SEDANG LOADING ATAU OFFLINE ---
+        // Data klien dan revenue dikosongkan agar murni mengambil dari Google Sheets
+        const initialRevenueData = { current: 0, target: 120000000, activeClients: 0, targetNew: 3, renewalRate: 90, healthScore: 80, forecast: 85000000 };
         
-        const initialClients = [
-          { name: 'Hilon', rev: 12000000, health: 'Hijau', score: 95, renewal: '15 Okt 2026', risk: 'Low', action: 'Upsell Strategy' },
-          { name: 'Gusfil', rev: 10000000, health: 'Hijau', score: 90, renewal: '22 Nov 2026', risk: 'Low', action: 'Maintenance' },
-          { name: 'Sleepedia', rev: 6000000, health: 'Hijau', score: 88, renewal: '05 Des 2026', risk: 'Low', action: 'Cross-sell' },
-          { name: 'Sanbe', rev: 7000000, health: 'Hijau', score: 85, renewal: '12 Jan 2027', risk: 'Low', action: 'Maintenance' },
-          { name: 'Parahyangan', rev: 7000000, health: 'Hijau', score: 85, renewal: '20 Jan 2027', risk: 'Low', action: 'Maintenance' },
-          { name: 'Anugrah', rev: 7000000, health: 'Hijau', score: 82, renewal: '10 Feb 2027', risk: 'Low', action: 'Maintenance' },
-          { name: 'Innovilage', rev: 6500000, health: 'Kuning', score: 65, renewal: '01 Sep 2026', risk: 'Medium', action: 'Review Meeting' },
-          { name: 'Borneo', rev: 7000000, health: 'Kuning', score: 60, renewal: '15 Sep 2026', risk: 'Medium', action: 'Value Demonstration' },
-          { name: 'Uvee', rev: 5000000, health: 'Kuning', score: 55, renewal: '30 Agu 2026', risk: 'Medium', action: 'Resolve Issues' },
-          { name: 'Olympus', rev: 4000000, health: 'Merah', score: 30, renewal: '10 Agu 2026', risk: 'High', action: 'Urgent Intervention' },
-        ];
+        const initialClients = [];
 
-        const initialStrategicRevenue = [
-          { name: 'Sleepedia (Profit 1%)', rev: 5000000 },
-          { name: 'BTP (Barter Office)', rev: 6000000 },
-          { name: 'Saltriver (1.5%/rumah)', rev: 4500000 }
-        ];
+        const initialStrategicRevenue = [];
 
-        const initialProjectRevenue = [
-          { name: 'Branding', rev: 15000000 },
-          { name: 'Training', rev: 8000000 },
-          { name: 'Consulting', rev: 12000000 },
-          { name: 'Special Project', rev: 0 }
-        ];
+        const initialProjectRevenue = [];
 
         const initialFunnelData = [
           { stage: 'Prospect', count: 100, conv: '100%', target: 120, gap: -20 },
@@ -533,15 +514,19 @@
             const fetchSheetData = async () => {
               setIsLoading(true);
               try {
-                // KITA HAPUS PROXY-NYA: Ambil data secara langsung karena di Netlify tidak ada pembatasan CORS seketat di Canvas
+                // KEMBALI MENGGUNAKAN PROXY JSON: Ini menjamin Netlify tidak diblokir oleh Google (CORS)
+                const proxyUrl = 'https://api.allorigins.win/get?url=';
                 const urls = [
-                  'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv',
-                  'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv',
-                  'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv'
+                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=0&single=true&output=csv'),
+                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=172172068&single=true&output=csv'),
+                  proxyUrl + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub?gid=586338828&single=true&output=csv')
                 ];
 
                 const responses = await Promise.all(urls.map(url => fetch(url)));
-                const texts = await Promise.all(responses.map(res => res.text()));
+                const jsons = await Promise.all(responses.map(res => res.json()));
+                const texts = jsons.map(data => data.contents || "");
+
+                if (!texts[0]) throw new Error("Data tidak ditemukan dari Proxy");
 
                 // Pembaca format CSV
                 const parseCSV = (csv) => {
