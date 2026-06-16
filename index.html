@@ -15,6 +15,15 @@
     
     <!-- 2. Import Babel untuk membaca sintaks React (JSX) di browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- PENTING: Import Map untuk mengatasi Error "react/jsx-runtime" di browser -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime"
+      }
+    }
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     
@@ -37,17 +46,8 @@
         const initialStrategicRevenue = [];
         const initialProjectRevenue = [];
         const initialFunnelData = []; 
-        const initialAcquisition = []; // Dikosongkan, menunggu Google Sheets
-
-        const initialMarketing = {
-          main: { leads: 45, cr: 4.2 },
-          platforms: [
-            { platform: 'Instagram', reach: '45.2K', visits: '3.1K', click: 420, leads: 15, cr: '3.5%' },
-            { platform: 'LinkedIn', reach: '12.5K', visits: '1.2K', click: 350, leads: 18, cr: '5.1%' },
-            { platform: 'TikTok', reach: '85.0K', visits: '5.4K', click: 600, leads: 8, cr: '1.3%' },
-            { platform: 'Website (SEO)', reach: '10.2K', visits: '4.5K', click: 0, leads: 4, cr: '0.8%' },
-          ]
-        };
+        const initialAcquisition = []; 
+        const initialMarketing = { main: { leads: 0, cr: 0 }, platforms: [] }; 
         
         const initialRoadmap = {
           protect: [ { name: 'Renewal Existing Client', value: 90, status: '90%' }, { name: 'Client Health Score >80', value: 75, status: '75%' }, { name: 'Churn Reduction', value: 50, status: 'In Progress' } ],
@@ -66,6 +66,15 @@
         const initialFinance = { totalRev: 0, grossProfit: 0, opEx: 0, netProfit: 0, cashPos: 0, ar: 0, ap: 0, burnRate: 0 };
 
         const formatIDR = (num) => 'Rp' + Number(num).toLocaleString('id-ID');
+
+        const formatCompactNumber = (val) => {
+            if (!val) return '0';
+            const num = Number(val.toString().replace(/[^0-9.]/g, ""));
+            if (isNaN(num)) return val.toString(); 
+            if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
+            return num.toString();
+        };
 
         // --- UTILITY COMPONENTS ---
         const Card = ({ children, className = "" }) => <div className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 ${className}`}>{children}</div>;
@@ -118,14 +127,13 @@
         };
         const UploadIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 
-        // --- GLOBAL DATE COUNTDOWN HELPER ---
         const calculateCountdown = (dateStr) => {
           if (!dateStr) return { text: '-', color: 'text-slate-500 dark:text-slate-400', label: 'Tdk Terdeteksi' };
           
           const months = {
             jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, jun: 5,
             jul: 6, agu: 7, sep: 8, okt: 9, nov: 10, des: 11,
-            oct: 9, dec: 11, aug: 7, sep: 8 // Fallback english
+            oct: 9, dec: 11, aug: 7, sep: 8 
           };
           
           const parts = dateStr.toLowerCase().split(' ');
@@ -141,7 +149,7 @@
           }
           
           const renewalDate = new Date(year, month, day);
-          const today = new Date(); // Sesuai real-time
+          const today = new Date(); 
           const diffTime = renewalDate - today;
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           
@@ -202,7 +210,6 @@
           
           const totalCore = clients.reduce((acc, c) => acc + Number(c.rev || 0), 0);
           
-          // Kalkulasi Estimasi dan Realisasi
           const totalStrategicRev = strategic.reduce((acc, s) => acc + Number(s.rev || 0), 0);
           const totalStrategicRealisasi = strategic.reduce((acc, s) => acc + Number(s.realisasi || 0), 0);
           
@@ -229,6 +236,7 @@
                   </div>
                 </Card>
                 <div className="space-y-6">
+                  {/* STRATEGIC REVENUE CARD */}
                   <Card className="bg-gradient-to-br from-[#0A1F44] to-[#1a3668] text-white border-none shadow-lg">
                     <h3 className="font-bold text-lg mb-4 text-[#F5A623]">Strategic Revenue</h3>
                     <div className="flex justify-between text-xs text-white/60 mb-2 border-b border-white/20 pb-1">
@@ -241,21 +249,32 @@
                       {strategic.map((item, i) => (
                         <div key={i} className="flex justify-between items-center pb-2 border-b border-white/10 last:border-0">
                           <span className="w-2/5"><EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateStrategic(i, 'name', v)} inputClass="w-full bg-transparent border-white/30 text-white" /></span>
-                          <span className="font-bold text-[#F5A623] text-right w-1/3"><EditableField isEditing={isEditing} type="number" prefix="Rp" value={item.realisasi} onChange={(v) => updateStrategic(i, 'realisasi', v)} inputClass="w-full bg-transparent border-white/30 text-white text-right" /></span>
+                          <span className="w-1/4 text-right text-white/90">
+                            {/* Memastikan prefix Rp ditambahkan untuk visualisasi Estimasi */}
+                            <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateStrategic(i, 'rev', v)} inputClass="w-full bg-transparent border-white/30 text-white text-right" />
+                          </span>
+                          <span className="font-bold text-[#F5A623] text-right w-1/3">
+                            <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.realisasi} onChange={(v) => updateStrategic(i, 'realisasi', v)} inputClass="w-full bg-transparent border-white/30 text-white text-right" />
+                          </span>
                         </div>
                       ))}
                       <div className="pt-2 mt-1 border-t border-white/20">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-white/70">Total Estimasi</span>
-                          <span className="text-white/70">{formatIDR(totalStrategicRev)}</span>
+                        {/* Perbaikan layout footer agar rata persis di bawah masing-masing kolom */}
+                        <div className="flex justify-between items-center text-xs mb-1">
+                          <span className="w-2/5 text-white/70 font-medium">Total Estimasi</span>
+                          <span className="w-1/4 text-right text-white/70">{formatIDR(totalStrategicRev)}</span>
+                          <span className="w-1/3"></span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-[#F5A623]">TOTAL REALISASI</span>
-                          <span className="font-bold text-[#F5A623]">{formatIDR(totalStrategicRealisasi)}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="w-2/5 font-bold text-[#F5A623]">TOTAL REALISASI</span>
+                          <span className="w-1/4"></span>
+                          <span className="w-1/3 font-bold text-[#F5A623] text-right">{formatIDR(totalStrategicRealisasi)}</span>
                         </div>
                       </div>
                     </div>
                   </Card>
+
+                  {/* PROJECT REVENUE CARD */}
                   <Card className="shadow-md border-t-4 border-t-[#0A1F44]">
                     <h3 className="font-bold text-lg mb-4 dark:text-white">Project Revenue</h3>
                     <div className="flex justify-between text-xs text-slate-400 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
@@ -268,18 +287,26 @@
                       {project.map((item, i) => (
                         <div key={i} className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-700 last:border-0">
                           <span className="w-2/5 font-medium text-slate-600 dark:text-slate-300"><EditableField isEditing={isEditing} value={item.name} onChange={(v) => updateProject(i, 'name', v)} inputClass="w-full" /></span>
-                          <span className="w-1/4 text-right text-slate-500 dark:text-slate-400"><EditableField isEditing={isEditing} type="number" value={item.rev} onChange={(v) => updateProject(i, 'rev', v)} inputClass="w-full text-right" /></span>
-                          <span className="font-bold text-[#0A1F44] dark:text-white text-right w-1/3"><EditableField isEditing={isEditing} type="number" prefix="Rp" value={item.realisasi} onChange={(v) => updateProject(i, 'realisasi', v)} inputClass="w-full text-right" /></span>
+                          <span className="w-1/4 text-right text-slate-500 dark:text-slate-400">
+                            {/* Memastikan prefix Rp ditambahkan untuk visualisasi Estimasi */}
+                            <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.rev} onChange={(v) => updateProject(i, 'rev', v)} inputClass="w-full text-right" />
+                          </span>
+                          <span className="font-bold text-[#0A1F44] dark:text-white text-right w-1/3">
+                            <EditableField isEditing={isEditing} type="number" prefix="Rp " value={item.realisasi} onChange={(v) => updateProject(i, 'realisasi', v)} inputClass="w-full text-right" />
+                          </span>
                         </div>
                       ))}
                       <div className="pt-2 mt-1 border-t border-slate-200 dark:border-slate-600">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-slate-500 dark:text-slate-400">Total Estimasi</span>
-                          <span className="text-slate-500 dark:text-slate-400">{formatIDR(totalProjectRev)}</span>
+                        {/* Perbaikan layout footer agar rata persis di bawah masing-masing kolom */}
+                        <div className="flex justify-between items-center text-xs mb-1">
+                          <span className="w-2/5 text-slate-500 dark:text-slate-400 font-medium">Total Estimasi</span>
+                          <span className="w-1/4 text-right text-slate-500 dark:text-slate-400">{formatIDR(totalProjectRev)}</span>
+                          <span className="w-1/3"></span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-[#0A1F44] dark:text-white">TOTAL CAIR</span>
-                          <span className="font-bold text-[#0A1F44] dark:text-white">{formatIDR(totalProjectRealisasi)}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="w-2/5 font-bold text-[#0A1F44] dark:text-white">TOTAL CAIR</span>
+                          <span className="w-1/4"></span>
+                          <span className="w-1/3 font-bold text-[#0A1F44] dark:text-white text-right">{formatIDR(totalProjectRealisasi)}</span>
                         </div>
                       </div>
                     </div>
@@ -355,9 +382,9 @@
 
         const ClientHealthFull = ({ clients, setClients, isEditing }) => {
           const [selectedClient, setSelectedClient] = useState(null);
-          const [actionStatus, setActionStatus] = useState(null); // Feedback non-blocking pengganti alert()
-          const [searchTerm, setSearchTerm] = useState(''); // State pencarian
-          const [filterHealth, setFilterHealth] = useState('Semua'); // State filter status
+          const [actionStatus, setActionStatus] = useState(null); 
+          const [searchTerm, setSearchTerm] = useState(''); 
+          const [filterHealth, setFilterHealth] = useState('Semua'); 
 
           const updateClient = (idx, field, val) => { const updated = [...clients]; updated[idx][field] = val; setClients(updated); };
           const getHealthBadge = (health) => {
@@ -374,13 +401,11 @@
             setTimeout(() => setActionStatus(null), 3500);
           };
 
-          // IMPLEMENTASI: Matriks Prioritas Risiko (Filter & Sortir Klien Kuning/Merah berdasarkan Revenue Terbesar)
           const urgentClients = clients
             .filter(c => c.health === 'Merah' || c.health === 'Kuning' || c.score < 75)
             .sort((a, b) => b.rev - a.rev)
-            .slice(0, 3); // Ambil top 3 dengan nilai dampak keuangan terbesar
+            .slice(0, 3);
 
-          // IMPLEMENTASI: Filter & Search logic untuk Client Health Roster
           const filteredClients = clients.filter(client => {
             const matchesSearch = (client.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                                   (client.action || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -390,14 +415,12 @@
 
           return (
             <div className="space-y-6 relative animate-in fade-in duration-300">
-              {/* STATUS GRID UTAMA */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"><h3 className="text-emerald-800 dark:text-emerald-400 font-bold text-lg">Client Sehat</h3><p className="text-3xl font-black text-emerald-600 dark:text-emerald-500 mt-2">{clients.filter(c => c.health === 'Hijau').length}</p></Card>
                  <Card className="bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"><h3 className="text-yellow-800 dark:text-yellow-400 font-bold text-lg">Perlu Perhatian</h3><p className="text-3xl font-black text-yellow-600 dark:text-yellow-500 mt-2">{clients.filter(c => c.health === 'Kuning').length}</p></Card>
                  <Card className="bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800"><h3 className="text-rose-800 dark:text-rose-400 font-bold text-lg">Risiko Tinggi</h3><p className="text-3xl font-black text-rose-600 dark:text-rose-500 mt-2">{clients.filter(c => c.health === 'Merah').length}</p></Card>
               </div>
 
-              {/* IMPLEMENTASI: Matriks Prioritas Risiko (Urgent Intervention List) */}
               <div className="mb-6">
                 <SectionTitle 
                   title="Prioritas Intervensi Darurat (Financial Risk Mitigation)" 
@@ -460,7 +483,6 @@
                 )}
               </div>
 
-              {/* CLIENT HEALTH TABLE LIST WITH SEARCH & FILTER */}
               <Card>
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
                   <SectionTitle 
@@ -468,9 +490,7 @@
                     subtitle="Monitoring status dan sisa masa kontrak per klien (klik baris untuk melihat detail pilar)" 
                   />
                   
-                  {/* BAR PENCARIAN & FILTER PIL */}
                   <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch sm:items-center">
-                    {/* Input Search */}
                     <div className="relative min-w-[240px]">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                         <Search size={16} />
@@ -492,7 +512,6 @@
                       )}
                     </div>
 
-                    {/* Filter Status */}
                     <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
                       {['Semua', 'Hijau', 'Kuning', 'Merah'].map((status) => {
                         const count = status === 'Semua' 
@@ -544,7 +563,6 @@
                          </tr>
                        ) : (
                          filteredClients.map((client) => {
-                           // Menemukan indeks asli klien di dalam array 'clients' agar updateClient tidak salah sasaran
                            const originalIndex = clients.findIndex(c => c.name === client.name);
                            const countdown = calculateCountdown(client.renewal);
                            
@@ -588,15 +606,12 @@
                 </div>
               </Card>
 
-              {/* INTERACTIVE SIDEBAR DETAILS PANEL */}
               {selectedClient && (
                 <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-                  {/* Backdrop Overlay */}
                   <div 
                     className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200" 
                     onClick={() => { setSelectedClient(null); setActionStatus(null); }}
                   />
-                  {/* Sidebar Panel */}
                   <div className="relative w-full max-w-md bg-white dark:bg-slate-800 shadow-2xl h-full flex flex-col p-6 border-l border-slate-200 dark:border-slate-700 animate-in slide-in-from-right duration-300">
                     <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-700 mb-6">
                       <div>
@@ -612,7 +627,6 @@
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-6 pr-1">
-                      {/* Ringkasan Skor & Status */}
                       <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
                         <div>
                           <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">Health Score</span>
@@ -624,11 +638,9 @@
                         </div>
                       </div>
 
-                      {/* Detail 3 Pilar Skor */}
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Evaluasi 3 Pilar Utama</h4>
                         <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl space-y-4 border border-slate-100 dark:border-slate-800/50">
-                          {/* Pilar 1: Kepuasan */}
                           <div>
                             <div className="flex justify-between text-sm mb-1.5">
                               <span className="font-semibold text-slate-700 dark:text-slate-300">Kepuasan Klien</span>
@@ -640,7 +652,6 @@
                             <span className="text-[10px] text-slate-400 mt-1 block">Bobot Kontribusi: 30% dari total Health Score</span>
                           </div>
 
-                          {/* Pilar 2: Ketepatan Pembayaran */}
                           <div>
                             <div className="flex justify-between text-sm mb-1.5">
                               <span className="font-semibold text-slate-700 dark:text-slate-300">Ketepatan Pembayaran</span>
@@ -652,7 +663,6 @@
                             <span className="text-[10px] text-slate-400 mt-1 block">Bobot Kontribusi: 40% dari total Health Score</span>
                           </div>
 
-                          {/* Pilar 3: Keterlibatan */}
                           <div>
                             <div className="flex justify-between text-sm mb-1.5">
                               <span className="font-semibold text-slate-700 dark:text-slate-300">Keterlibatan Tim</span>
@@ -666,13 +676,11 @@
                         </div>
                       </div>
 
-                      {/* Revenue Contribution */}
                       <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Kontribusi Pendapatan</span>
                         <span className="text-md font-bold text-slate-800 dark:text-white">{formatIDR(selectedClient.rev)} / bln</span>
                       </div>
 
-                      {/* Detail Sisa Kontrak & Countdown */}
                       <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl space-y-2 border border-slate-100 dark:border-slate-800">
                         <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block">Sisa Masa Kontrak</span>
                         <div className="flex items-center justify-between">
@@ -687,7 +695,6 @@
                         </div>
                       </div>
 
-                      {/* Rekomendasi Tindakan Strategis */}
                       <div className="space-y-2">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Strategi Penanganan AM (Next Action)</span>
                         <div className="bg-[#0A1F44]/5 dark:bg-slate-900/30 p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
@@ -698,14 +705,12 @@
                       </div>
                     </div>
 
-                    {/* Toast Notification (Ganti Alert Box) */}
                     {actionStatus && (
                       <div className="p-3 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl mb-3 flex items-center gap-2 animate-in fade-in">
                         <Info size={16} /> {actionStatus}
                       </div>
                     )}
 
-                    {/* Quick Action Buttons */}
                     <div className="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2 mt-6">
                       <button 
                         className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:bg-[#20ba5a] transition-colors shadow-sm"
@@ -752,7 +757,6 @@
                 <SectionTitle title="Acquisition Channels" subtitle="Distribusi channel dan kontribusi revenue" />
                 <div className="space-y-6">
                   {data.map((item, i) => {
-                    // MENGHITUNG PERSENTASE SHARE SECARA OTOMATIS & DINAMIS
                     const percentage = totalRevAcq > 0 ? (Number(item.rev || 0) / totalRevAcq) * 100 : 0;
 
                     return (
@@ -795,29 +799,76 @@
         };
 
         const MarketingDashboardFull = ({ data, setData, isEditing }) => {
-          const updateMain = (field, val) => setData({...data, main: {...data.main, [field]: val}});
-          const updatePlatform = (idx, field, val) => { const updatedPlatforms = [...data.platforms]; updatedPlatforms[idx][field] = val; setData({...data, platforms: updatedPlatforms}); };
+          if (!data || !data.platforms || data.platforms.length === 0) {
+            return (
+              <Card className="flex flex-col items-center justify-center p-12">
+                <Target size={48} className="text-slate-300 mb-4" />
+                <p className="text-slate-500 italic">Menunggu data Marketing Dashboard...</p>
+              </Card>
+            );
+          }
+
+          const updatePlatform = (idx, field, val) => { 
+            const updatedPlatforms = [...data.platforms]; 
+            updatedPlatforms[idx][field] = val; 
+            
+            let totalLeads = 0;
+            let totalClicks = 0;
+            let totalVisits = 0;
+
+            updatedPlatforms.forEach((item) => {
+              const click = Number(item.click || 0);
+              const leads = Number(item.leads || 0);
+              const visits = Number(item.visits || 0);
+              
+              totalLeads += leads;
+              totalClicks += click;
+              totalVisits += visits;
+
+              if (click > 0) {
+                item.cr = ((leads / click) * 100).toFixed(1) + '%';
+              } else if (visits > 0) {
+                item.cr = ((leads / visits) * 100).toFixed(1) + '%';
+              } else {
+                item.cr = '0%';
+              }
+            });
+
+            let globalCr = 0;
+            if (totalClicks > 0) {
+              globalCr = Number(((totalLeads / totalClicks) * 100).toFixed(1));
+            } else if (totalVisits > 0) {
+              globalCr = Number(((totalLeads / totalVisits) * 100).toFixed(1));
+            }
+
+            setData({
+              main: { leads: totalLeads, cr: globalCr },
+              platforms: updatedPlatforms
+            });
+          };
 
           return (
             <div className="space-y-6">
-              <div className="bg-[#0A1F44] text-white rounded-xl p-6 relative overflow-hidden">
+              <div className="bg-[#0A1F44] text-white rounded-xl p-6 relative overflow-hidden shadow-lg border border-[#1a3668]">
                 <div className="absolute top-0 right-0 p-8 opacity-10"><Activity size={120} /></div>
                 <h2 className="text-2xl font-bold mb-2 relative z-10">Fokus Utama: Leads Generated</h2>
                 <p className="text-slate-300 mb-6 max-w-lg relative z-10">Marketing difokuskan pada konversi nyata, bukan vanity metrics. Seluruh aktivitas diukur dari kemampuannya menghasilkan leads berkualitas untuk pipeline sales.</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20"><p className="text-sm text-slate-300">Total Leads</p><p className="text-3xl font-bold text-[#F5A623] mt-1"><EditableField isEditing={isEditing} type="number" value={data.main.leads} onChange={(v) => updateMain('leads', v)} inputClass="w-20 bg-transparent text-[#F5A623] border-white/30" /></p></div>
-                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20"><p className="text-sm text-slate-300">Avg. Conversion Rate</p><p className="text-3xl font-bold mt-1 flex items-center"><EditableField isEditing={isEditing} type="number" value={data.main.cr} onChange={(v) => updateMain('cr', v)} inputClass="w-20 bg-transparent text-white border-white/30" /> %</p></div>
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20"><p className="text-sm text-slate-300">Total Leads</p><p className="text-3xl font-bold text-[#F5A623] mt-1">{data.main.leads}</p></div>
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm border border-white/20"><p className="text-sm text-slate-300">Avg. Conversion Rate</p><p className="text-3xl font-bold mt-1 flex items-center">{data.main.cr}%</p></div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {data.platforms.map((item, i) => (
                   <Card key={i}>
-                    <h3 className="font-bold text-lg mb-4 text-[#0A1F44] dark:text-white border-b pb-2 dark:border-slate-700"><EditableField isEditing={isEditing} value={item.platform} onChange={(v) => updatePlatform(i, 'platform', v)} inputClass="w-full" /></h3>
+                    <h3 className="font-bold text-lg mb-4 text-[#0A1F44] dark:text-white border-b pb-2 dark:border-slate-700">
+                      <EditableField isEditing={isEditing} value={item.platform} onChange={(v) => updatePlatform(i, 'platform', v)} inputClass="w-full" />
+                    </h3>
                     <div className="space-y-3">
-                      <div className="flex justify-between text-sm"><span className="text-slate-500">Reach</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.reach} onChange={(v) => updatePlatform(i, 'reach', v)} inputClass="w-16 text-right" /></span></div>
-                      <div className="flex justify-between text-sm"><span className="text-slate-500">Profile Visit</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.visits} onChange={(v) => updatePlatform(i, 'visits', v)} inputClass="w-16 text-right" /></span></div>
-                      <div className="flex justify-between text-sm"><span className="text-slate-500">Link Clicks</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={item.click} onChange={(v) => updatePlatform(i, 'click', v)} inputClass="w-16 text-right" /></span></div>
-                      <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center"><span className="font-bold text-[#0A1F44] dark:text-white">Leads</span><span className="bg-[#F5A623] text-white px-2 py-1 rounded text-xs font-bold flex gap-1 items-center"><EditableField isEditing={isEditing} type="number" value={item.leads} onChange={(v) => updatePlatform(i, 'leads', v)} inputClass="w-10 bg-transparent border-white/50 text-white" /> (<EditableField isEditing={isEditing} value={item.cr} onChange={(v) => updatePlatform(i, 'cr', v)} inputClass="w-12 bg-transparent border-white/50 text-white" />)</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-slate-500">Reach</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={formatCompactNumber(item.reach)} onChange={(v) => updatePlatform(i, 'reach', v)} inputClass="w-16 text-right" /></span></div>
+                      <div className="flex justify-between text-sm"><span className="text-slate-500">Profile Visit</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} value={formatCompactNumber(item.visits)} onChange={(v) => updatePlatform(i, 'visits', v)} inputClass="w-16 text-right" /></span></div>
+                      <div className="flex justify-between text-sm"><span className="text-slate-500">Link Clicks</span><span className="font-semibold dark:text-slate-300"><EditableField isEditing={isEditing} type="number" value={item.click} onChange={(v) => updatePlatform(i, 'click', v)} inputClass="w-16 text-right" /></span></div>
+                      <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center"><span className="font-bold text-[#0A1F44] dark:text-white">Leads</span><span className="bg-[#F5A623] text-white px-2.5 py-1 rounded text-xs font-bold flex gap-1 items-center"><EditableField isEditing={isEditing} type="number" value={item.leads} onChange={(v) => updatePlatform(i, 'leads', v)} inputClass="w-10 bg-transparent border-white/50 text-white" /> ({item.cr})</span></div>
                     </div>
                   </Card>
                 ))}
@@ -924,7 +975,7 @@
           const [isEditing, setIsEditing] = useState(false);
           const [isLoading, setIsLoading] = useState(true);
           const [fetchError, setFetchError] = useState(null); 
-          const [fetchWarnings, setFetchWarnings] = useState([]); // Menyimpan warning per sheet
+          const [fetchWarnings, setFetchWarnings] = useState([]); 
           const [currentPeriod, setCurrentPeriod] = useState('Juni 2026');
           
           const [revenueData, setRevenueData] = useState(initialRevenueData);
@@ -945,14 +996,11 @@
                 return Number(cleaned) || 0;
             };
 
-            // FUNGSI FETCH INDEPENDEN: Satu gagal, yang lain tetap jalan.
             const fetchSafely = async (url, sheetName) => {
                 try {
-                    // Coba jalur utama (Langsung ke Google)
                     const res = await fetch(url);
                     if (res.ok) {
                         const text = await res.text();
-                        // Cek apakah Google malah mengirim halaman HTML (Login Screen)
                         if (!text.trim().toLowerCase().startsWith('<!doctype') && !text.trim().toLowerCase().startsWith('<html')) {
                             return { name: sheetName, data: text, error: null };
                         }
@@ -962,7 +1010,6 @@
                 }
                 
                 try {
-                    // Jalur Cadangan (Proxy yang ramah CORS)
                     const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
                     const resProxy = await fetch(proxyUrl);
                     if (resProxy.ok) {
@@ -975,7 +1022,6 @@
                     console.log(`Proxy untuk ${sheetName} juga gagal.`);
                 }
 
-                // Jika benar-benar gagal
                 return { 
                     name: sheetName, 
                     data: "", 
@@ -991,36 +1037,34 @@
               const baseUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub';
               
               const urls = [
-                `${baseUrl}?gid=0&output=csv`,           // Tab 1: Core Clients
-                `${baseUrl}?gid=172172068&output=csv`,   // Tab 2: Strategic Revenue
-                `${baseUrl}?gid=586338828&output=csv`,   // Tab 3: Project Revenue
-                `${baseUrl}?gid=506452129&output=csv`,   // Tab 4: Target KPI 
-                `${baseUrl}?gid=1113045615&output=csv`,  // Tab 5: Sales Funnel
-                `${baseUrl}?gid=711899863&output=csv` // Tab 6: Client Acquisition (HARAP GANTI DENGAN GID ASLI)
+                `${baseUrl}?gid=0&output=csv`,           
+                `${baseUrl}?gid=172172068&output=csv`,   
+                `${baseUrl}?gid=586338828&output=csv`,   
+                `${baseUrl}?gid=506452129&output=csv`,   
+                `${baseUrl}?gid=1113045615&output=csv`,  
+                `${baseUrl}?gid=711899863&output=csv`,   
+                `${baseUrl}?gid=2127476729&output=csv` // Tab 7: Marketing Dashboard
               ];
 
               try {
-                // Menarik KE-ENAM data secara bersamaan
                 const results = await Promise.all([
                     fetchSafely(urls[0], "Core Clients"),
                     fetchSafely(urls[1], "Strategic Revenue"),
                     fetchSafely(urls[2], "Project Revenue"),
                     fetchSafely(urls[3], "Target KPI"),
                     fetchSafely(urls[4], "Sales Funnel"),
-                    fetchSafely(urls[5], "Client Acquisition")
+                    fetchSafely(urls[5], "Client Acquisition"),
+                    fetchSafely(urls[6], "Marketing Dashboard")
                 ]);
 
-                // Mengumpulkan pesan error jika ada sheet yang gagal
                 const warnings = results.filter(r => r.error).map(r => r.error);
                 if (warnings.length > 0) {
                     setFetchWarnings(warnings);
-                    // Jika SEMUANYA gagal, beri alert merah besar
-                    if (warnings.length === 6) {
+                    if (warnings.length === 7) {
                         throw new Error("Semua koneksi ke Google Sheets diblokir. Harap periksa izin 'Publish to Web' atau nonaktifkan pemblokir iklan (Adblocker/Brave Shields).");
                     }
                 }
 
-                // Parser CSV
                 const parseCSV = (csv) => {
                   if (!csv) return [];
                   const lines = csv.split(/\r?\n/).filter(line => line.trim());
@@ -1047,8 +1091,7 @@
                   });
                 };
 
-                // Proses Data secara independen (Hanya yang berhasil di-fetch)
-                let coreData = [], stratData = [], projData = [], targetData = null, acqData = [];
+                let coreData = [], stratData = [], projData = [], targetData = null, marketingPlats = [];
 
                 if (results[0].data) {
                     coreData = parseCSV(results[0].data).map(item => ({ 
@@ -1119,7 +1162,7 @@
                 }
 
                 if (results[5].data) {
-                    acqData = parseCSV(results[5].data).map(item => ({
+                    const acqData = parseCSV(results[5].data).map(item => ({
                         channel: item.channel || '',
                         leads: parseNumber(item.leads),
                         meeting: parseNumber(item.meeting),
@@ -1131,12 +1174,56 @@
                     setAcquisitionData(acqData);
                 }
 
-                // Kalkulasi Total Revenue BERDASARKAN REALISASI
+                if (results[6].data) {
+                    const parsedMarketing = parseCSV(results[6].data);
+                    
+                    let totalLeads = 0;
+                    let totalClicks = 0;
+                    let totalVisits = 0;
+
+                    marketingPlats = parsedMarketing.map(item => {
+                        const click = parseNumber(item.click);
+                        const leads = parseNumber(item.leads);
+                        const visits = parseNumber(item.visits || item.visit);
+                        
+                        totalLeads += leads;
+                        totalClicks += click;
+                        totalVisits += visits;
+
+                        let cr = '0%';
+                        if (click > 0) {
+                            cr = ((leads / click) * 100).toFixed(1) + '%';
+                        } else if (visits > 0) {
+                            cr = ((leads / visits) * 100).toFixed(1) + '%';
+                        }
+
+                        return {
+                            platform: item.platform || '',
+                            reach: item.reach || '0',
+                            visits: item.visits || item.visit || '0',
+                            click: click,
+                            leads: leads,
+                            cr: cr
+                        };
+                    });
+
+                    let globalCr = 0;
+                    if (totalClicks > 0) {
+                        globalCr = Number(((totalLeads / totalClicks) * 100).toFixed(1));
+                    } else if (totalVisits > 0) {
+                        globalCr = Number(((totalLeads / totalVisits) * 100).toFixed(1));
+                    }
+
+                    setMarketingData({
+                        main: { leads: totalLeads, cr: globalCr },
+                        platforms: marketingPlats
+                    });
+                }
+
                 const totalCoreRev = coreData.reduce((sum, item) => sum + item.rev, 0);
                 const totalStratRealisasi = stratData.reduce((sum, item) => sum + (item.realisasi || 0), 0);
                 const totalProjRealisasi = projData.reduce((sum, item) => sum + (item.realisasi || 0), 0);
 
-                // Kalkulasi Nilai Rata-rata Health Score
                 let avgHealthScore = 80; 
                 if (coreData.length > 0) {
                     const totalScore = coreData.reduce((sum, item) => sum + (item.score || 0), 0);
@@ -1232,7 +1319,7 @@
                     </div>
                   </div>
                   <div className="flex items-center gap-2 md:gap-4">
-                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-md transition-all ${isEditing ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}>
+                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-md transition-all ${isEditing ? 'bg-[#38bdf8] text-white shadow-md shadow-blue-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}>
                       {isEditing ? <Check size={16} /> : <Edit3 size={16} />} {isEditing ? 'Selesai Edit' : 'Edit Data'}
                     </button>
                     <div className="hidden lg:flex items-center gap-2 mx-2 border-r border-slate-200 dark:border-slate-700 pr-4">
