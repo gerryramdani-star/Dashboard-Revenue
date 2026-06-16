@@ -37,7 +37,7 @@
         import { 
           LayoutDashboard, DollarSign, Filter, Bell, Sun, Moon, Download, 
           ChevronRight, BarChart2, Users, Target, Activity, Map, UserCheck, 
-          Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar, AlertCircle, Info
+          Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar, AlertCircle, Info, RefreshCw
         } from 'https://esm.sh/lucide-react@0.292.0';
 
         // --- INITIAL DATA (Dikosongkan agar murni dari GSheets) ---
@@ -49,7 +49,7 @@
         const initialAcquisition = []; 
         const initialMarketing = { main: { leads: 0, cr: 0 }, platforms: [] }; 
         const initialRoadmap = { protect: [], optimize: [], growth: [] }; 
-        const initialTeamKpi = { ceo: [], cmo: [], ae: [], cs: [], coo: [] }; // Dikosongkan
+        const initialTeamKpi = { ceo: [], cmo: [], ae: [], cs: [], coo: [] };
         
         const initialFinance = { totalRev: 0, grossProfit: 0, opEx: 0, netProfit: 0, cashPos: 0, ar: 0, ap: 0, burnRate: 0 };
 
@@ -980,11 +980,22 @@
           const [isDarkMode, setIsDarkMode] = useState(false);
           const [isSidebarOpen, setIsSidebarOpen] = useState(true);
           
-          const [isEditing, setIsEditing] = useState(false);
+          const isEditing = false; 
           const [isLoading, setIsLoading] = useState(true);
           const [fetchError, setFetchError] = useState(null); 
           const [fetchWarnings, setFetchWarnings] = useState([]); 
-          const [currentPeriod, setCurrentPeriod] = useState('Juni 2026');
+          
+          // SMART NOTIFICATION STATES
+          const [notifications, setNotifications] = useState([]);
+          const [hasUnread, setHasUnread] = useState(false);
+          const [isNotifOpen, setIsNotifOpen] = useState(false);
+          
+          const getCurrentPeriod = () => {
+            const date = new Date();
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return `${months[date.getMonth()]} ${date.getFullYear()}`;
+          };
+          const [currentPeriod] = useState(getCurrentPeriod());
           
           const [revenueData, setRevenueData] = useState(initialRevenueData);
           const [funnelData, setFunnelData] = useState(initialFunnelData);
@@ -997,7 +1008,7 @@
           const [teamKpiData, setTeamKpiData] = useState(initialTeamKpi);
           const [financeData, setFinanceData] = useState(initialFinance);
 
-          useEffect(() => {
+          const fetchSheetData = async () => {
             const parseNumber = (val) => {
                 if (!val) return 0;
                 const cleaned = val.toString().replace(/[^0-9-]/g, ""); 
@@ -1037,14 +1048,13 @@
                 };
             };
 
-            const fetchSheetData = async () => {
-              setIsLoading(true);
-              setFetchError(null);
-              setFetchWarnings([]);
+            setIsLoading(true);
+            setFetchError(null);
+            setFetchWarnings([]);
 
-              const baseUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub';
-              
-              const urls = [
+            const baseUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREER9VzmeYUpJP9H4UH866bCCE5rtjyCFI1_P6jwVWF9XmY359fFxeeZdRgtDkFBuKsHd_s3Fvm8x4/pub';
+            
+            const urls = [
                 `${baseUrl}?gid=0&output=csv`,           
                 `${baseUrl}?gid=172172068&output=csv`,   
                 `${baseUrl}?gid=586338828&output=csv`,   
@@ -1053,11 +1063,10 @@
                 `${baseUrl}?gid=711899863&output=csv`,   
                 `${baseUrl}?gid=2127476729&output=csv`,
                 `${baseUrl}?gid=1157766128&output=csv`,
-                `${baseUrl}?gid=2145307988&output=csv` // Tab 9: Team KPI
+                `${baseUrl}?gid=2145307988&output=csv`
               ];
 
               try {
-                // Menarik KE-SEMBILAN data secara bersamaan
                 const results = await Promise.all([
                     fetchSafely(urls[0], "Core Clients"),
                     fetchSafely(urls[1], "Strategic Revenue"),
@@ -1149,128 +1158,69 @@
 
                 if (results[4].data) {
                     const parsedFunnel = parseCSV(results[4].data);
-                    
                     const formattedFunnel = parsedFunnel.map((item, index, arr) => {
                         const count = parseNumber(item.count);
                         const target = parseNumber(item.target);
                         const prevCount = index > 0 ? parseNumber(arr[index - 1].count) : count;
-                        
                         let conv = '100%';
                         if (index > 0 && prevCount > 0) {
                             conv = Math.round((count / prevCount) * 100) + '%';
                         } else if (index > 0 && prevCount === 0) {
                             conv = '0%';
                         }
-
                         return {
-                            stage: item.stage || '',
-                            count: count,
-                            target: target,
-                            conv: conv,
-                            gap: count - target
+                            stage: item.stage || '', count: count, target: target, conv: conv, gap: count - target
                         };
                     });
-                    
                     if (formattedFunnel.length > 0) setFunnelData(formattedFunnel);
                 }
 
                 if (results[5].data) {
                     const acqData = parseCSV(results[5].data).map(item => ({
-                        channel: item.channel || '',
-                        leads: parseNumber(item.leads),
-                        meeting: parseNumber(item.meeting),
-                        opp: parseNumber(item.opp),
-                        prop: parseNumber(item.prop),
-                        close: parseNumber(item.close),
-                        rev: parseNumber(item.rev)
+                        channel: item.channel || '', leads: parseNumber(item.leads), meeting: parseNumber(item.meeting),
+                        opp: parseNumber(item.opp), prop: parseNumber(item.prop), close: parseNumber(item.close), rev: parseNumber(item.rev)
                     }));
                     setAcquisitionData(acqData);
                 }
 
                 if (results[6].data) {
                     const parsedMarketing = parseCSV(results[6].data);
-                    
-                    let totalLeads = 0;
-                    let totalClicks = 0;
-                    let totalVisits = 0;
-
+                    let totalLeads = 0; let totalClicks = 0; let totalVisits = 0;
                     marketingPlats = parsedMarketing.map(item => {
-                        const click = parseNumber(item.click);
-                        const leads = parseNumber(item.leads);
-                        const visits = parseNumber(item.visits || item.visit);
-                        
-                        totalLeads += leads;
-                        totalClicks += click;
-                        totalVisits += visits;
-
+                        const click = parseNumber(item.click); const leads = parseNumber(item.leads); const visits = parseNumber(item.visits || item.visit);
+                        totalLeads += leads; totalClicks += click; totalVisits += visits;
                         let cr = '0%';
-                        if (click > 0) {
-                            cr = ((leads / click) * 100).toFixed(1) + '%';
-                        } else if (visits > 0) {
-                            cr = ((leads / visits) * 100).toFixed(1) + '%';
-                        }
-
-                        return {
-                            platform: item.platform || '',
-                            reach: item.reach || '0',
-                            visits: item.visits || item.visit || '0',
-                            click: click,
-                            leads: leads,
-                            cr: cr
-                        };
+                        if (click > 0) cr = ((leads / click) * 100).toFixed(1) + '%';
+                        else if (visits > 0) cr = ((leads / visits) * 100).toFixed(1) + '%';
+                        return { platform: item.platform || '', reach: item.reach || '0', visits: item.visits || item.visit || '0', click: click, leads: leads, cr: cr };
                     });
-
                     let globalCr = 0;
-                    if (totalClicks > 0) {
-                        globalCr = Number(((totalLeads / totalClicks) * 100).toFixed(1));
-                    } else if (totalVisits > 0) {
-                        globalCr = Number(((totalLeads / totalVisits) * 100).toFixed(1));
-                    }
-
-                    setMarketingData({
-                        main: { leads: totalLeads, cr: globalCr },
-                        platforms: marketingPlats
-                    });
+                    if (totalClicks > 0) globalCr = Number(((totalLeads / totalClicks) * 100).toFixed(1));
+                    else if (totalVisits > 0) globalCr = Number(((totalLeads / totalVisits) * 100).toFixed(1));
+                    setMarketingData({ main: { leads: totalLeads, cr: globalCr }, platforms: marketingPlats });
                 }
 
                 if (results[7] && results[7].data) {
                     const parsedRoadmap = parseCSV(results[7].data);
                     const dynamicRoadmap = { protect: [], optimize: [], growth: [] };
-                    
                     parsedRoadmap.forEach(item => {
                         const cat = (item.category || '').toLowerCase().trim();
-                        const newItem = {
-                            name: item.name || '',
-                            value: parseNumber(item.value),
-                            status: item.status || ''
-                        };
-                        
+                        const newItem = { name: item.name || '', value: parseNumber(item.value), status: item.status || '' };
                         if (cat === 'protect') dynamicRoadmap.protect.push(newItem);
                         else if (cat === 'optimize') dynamicRoadmap.optimize.push(newItem);
                         else if (cat === 'growth') dynamicRoadmap.growth.push(newItem);
                     });
-                    
                     setRoadmapData(dynamicRoadmap);
                 }
 
-                // DYNAMIC TEAM KPI PARSING
                 if (results[8] && results[8].data) {
                     const parsedKPI = parseCSV(results[8].data);
                     const dynamicKPI = { ceo: [], cmo: [], ae: [], cs: [], coo: [] };
-                    
                     parsedKPI.forEach(item => {
                         const role = (item.role || '').toLowerCase().trim();
-                        const newItem = {
-                            label: item.kpi_name || item.kpi || item.name || '',
-                            val: item.value || '' // Disimpan sebagai string murni untuk kebebasan format
-                        };
-                        
-                        // Memastikan peran (role) valid sebelum dimasukkan ke dalam state
-                        if (dynamicKPI[role]) {
-                            dynamicKPI[role].push(newItem);
-                        }
+                        const newItem = { label: item.kpi_name || item.kpi || item.name || '', val: item.value || '' };
+                        if (dynamicKPI[role]) dynamicKPI[role].push(newItem);
                     });
-                    
                     setTeamKpiData(dynamicKPI);
                 }
 
@@ -1289,7 +1239,6 @@
                   current: totalCoreRev + totalStratRealisasi + totalProjRealisasi,
                   activeClients: coreData.length,
                   healthScore: avgHealthScore, 
-                  
                   target: targetData ? parseNumber(targetData.target_revenue) : prev.target,
                   forecast: targetData ? parseNumber(targetData.forecast) : prev.forecast,
                   targetNew: targetData ? parseNumber(targetData.target_new_client) : prev.targetNew,
@@ -1303,9 +1252,59 @@
                 setIsLoading(false);
               }
             };
-            
+
+          useEffect(() => {
             fetchSheetData();
           }, []);
+
+          // GENERATE SMART NOTIFICATIONS
+          useEffect(() => {
+            if (isLoading) return;
+
+            const newNotifs = [];
+            
+            // 1. Error / Warnings (Menggantikan Banner di layar utama)
+            if (fetchError) {
+                newNotifs.push({ id: 'err', type: 'error', title: 'Sinkronisasi Gagal', message: 'Semua koneksi ke Google Sheets terputus atau diblokir.' });
+            } else if (fetchWarnings && fetchWarnings.length > 0) {
+                newNotifs.push({ id: 'warn', type: 'warning', title: 'Sinkronisasi Parsial', message: `Terdapat ${fetchWarnings.length} tab yang gagal dimuat dari Google Sheets.` });
+            }
+
+            // 2. Client Risks
+            const criticalClients = clientsData.filter(c => c.health === 'Merah');
+            if (criticalClients.length > 0) {
+                newNotifs.push({ id: 'client-red', type: 'alert', title: 'Klien Kritis (Merah)', message: `Perhatian: Ada ${criticalClients.length} klien berstatus risiko tinggi (Merah).` });
+            }
+
+            let expiringCount = 0;
+            clientsData.forEach(c => {
+                const cd = calculateCountdown(c.renewal);
+                if (cd.label === 'Expired' || cd.label === 'Kritis') expiringCount++;
+            });
+            if (expiringCount > 0) {
+                newNotifs.push({ id: 'client-exp', type: 'alert', title: 'Kontrak Segera Habis', message: `Terdapat ${expiringCount} klien yang masa kontraknya sudah habis atau < 30 hari.` });
+            }
+
+            // 3. Financial/Targets
+            const gap = revenueData.target - revenueData.current;
+            if (revenueData.target > 0 && gap <= 0) {
+                newNotifs.push({ id: 'rev-ok', type: 'success', title: 'Target Tercapai! 🎉', message: 'Selamat! Total revenue bulan ini telah memenuhi atau melewati batas target.' });
+            } else if (gap > 0 && revenueData.current > 0) {
+                newNotifs.push({ id: 'rev-gap', type: 'info', title: 'Pembaruan Target', message: `Masih kurang ${formatIDR(gap)} untuk mencapai target revenue bulan ini.` });
+            }
+
+            // 4. Milestone jika semuanya aman
+            if (newNotifs.length === 0 && !fetchError && revenueData.current > 0) {
+                newNotifs.push({ id: 'all-good', type: 'success', title: 'Sistem & Operasional Stabil', message: 'Seluruh metrik operasional dan performa tim berjalan dengan sangat baik.' });
+            }
+
+            setNotifications(newNotifs);
+            
+            // Trigger red dot
+            if (revenueData.current > 0 || fetchError || fetchWarnings.length > 0) {
+                setHasUnread(true);
+            }
+          }, [isLoading, clientsData, revenueData, fetchError, fetchWarnings]);
 
           useEffect(() => {
             if (isDarkMode) document.documentElement.classList.add('dark');
@@ -1366,15 +1365,28 @@
                       <h2 className="text-lg font-bold text-[#0A1F44] dark:text-white">{activePage}</h2>
                       <div className="flex items-center text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
                         <Calendar size={14} className="mr-2 text-[#F5A623]" />
-                        {isEditing ? (
-                          <input type="text" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors" />
-                        ) : (<span>Periode: {currentPeriod}</span>)}
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span>Live Data: {currentPeriod}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 md:gap-4">
-                    <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-md transition-all ${isEditing ? 'bg-[#38bdf8] text-white shadow-md shadow-blue-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}>
-                      {isEditing ? <Check size={16} /> : <Edit3 size={16} />} {isEditing ? 'Selesai Edit' : 'Edit Data'}
+                    <button 
+                      onClick={fetchSheetData} 
+                      disabled={isLoading}
+                      className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-md transition-all ${
+                        isLoading 
+                          ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed' 
+                          : 'bg-[#38bdf8] text-white shadow-md shadow-blue-500/30 hover:bg-[#0284c7]'
+                      }`}
+                    >
+                      <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} /> 
+                      {isLoading ? 'Menyinkronkan...' : 'Sinkronkan Data'}
                     </button>
                     <div className="hidden lg:flex items-center gap-2 mx-2 border-r border-slate-200 dark:border-slate-700 pr-4">
                        <button className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#0A1F44] dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-md"><Filter size={14} /> Filter</button>
@@ -1382,10 +1394,54 @@
                     <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 rounded-full transition-colors">
                       {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
-                    <button className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 rounded-full relative transition-colors hidden sm:block">
-                      <Bell size={20} /> <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
-                    </button>
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#0A1F44] to-[#F5A623] flex items-center justify-center text-white font-bold text-sm ml-2 shadow-sm">CEO</div>
+                    
+                    {/* BELL ICON & NOTIFICATION DROPDOWN */}
+                    <div className="relative">
+                        <button 
+                          onClick={() => setIsNotifOpen(!isNotifOpen)} 
+                          className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 rounded-full relative transition-colors hidden sm:block"
+                        >
+                          <Bell size={20} /> 
+                          {hasUnread && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>}
+                        </button>
+
+                        {isNotifOpen && (
+                          <>
+                            {/* Overlay transparan agar dropdown tertutup saat layar diklik */}
+                            <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsNotifOpen(false)}></div>
+                            
+                            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                              <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
+                                <h3 className="font-bold text-sm text-[#0A1F44] dark:text-white flex items-center gap-2">
+                                  Notifikasi <span className="bg-[#0A1F44] text-white dark:bg-slate-700 text-[10px] px-2 py-0.5 rounded-full">{notifications.length}</span>
+                               </h3>
+                                {hasUnread && (
+                                  <button onClick={() => setHasUnread(false)} className="text-[10px] font-bold text-[#F5A623] hover:text-amber-600 transition-colors">
+                                    Tandai semua dibaca
+                                  </button>
+                                )}
+                              </div>
+                              <div className="max-h-80 overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">Belum ada pemberitahuan baru.</div>
+                                ) : (
+                                    notifications.map(n => (
+                                        <div key={n.id} className="p-4 border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex gap-3 items-start">
+                                            <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.type === 'error' || n.type === 'alert' ? 'bg-rose-500' : n.type === 'warning' ? 'bg-yellow-400' : n.type === 'success' ? 'bg-emerald-500' : 'bg-[#38bdf8]'}`}></div>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{n.title}</h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{n.message}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                    </div>
+                    {/* END OF BELL ICON */}
+
                   </div>
                 </header>
 
@@ -1398,35 +1454,18 @@
                      <div className="flex justify-between items-center"><h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">{activePage}</h2></div>
                      <div className="flex items-center w-max text-xs font-semibold bg-slate-50 dark:bg-slate-900 text-[#0A1F44] dark:text-slate-300 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
                         <Calendar size={14} className="mr-2 text-[#F5A623]" />
-                        {isEditing ? (
-                          <input type="text" value={currentPeriod} onChange={(e) => setCurrentPeriod(e.target.value)} className="bg-transparent border-b border-slate-300 dark:border-slate-600 outline-none w-28 focus:border-[#F5A623] dark:focus:border-[#F5A623] px-1 dark:text-white transition-colors" />
-                        ) : (<span>Periode: {currentPeriod}</span>)}
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span>Live Data: {currentPeriod}</span>
+                        </div>
                       </div>
                   </div>
                   
-                  {/* Banner Peringatan KETIGA Link Gagal (Warna Merah) */}
-                  {fetchError && (
-                    <div className="bg-rose-100 border border-rose-400 text-rose-700 px-4 py-3 rounded-lg relative mb-6 flex items-start gap-3 shadow-sm animate-in fade-in">
-                      <AlertCircle className="shrink-0 mt-0.5" size={20} />
-                      <div>
-                        <strong className="font-bold">Gagal menyinkronkan data! </strong>
-                        <span className="block sm:inline">{fetchError}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Banner Peringatan Jika HANYA SEBAGIAN Link yang Gagal (Warna Kuning) */}
-                  {!fetchError && fetchWarnings.length > 0 && (
-                    <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-lg relative mb-6 flex flex-col sm:flex-row items-start gap-3 shadow-sm animate-in fade-in">
-                      <Info className="shrink-0 mt-0.5 text-yellow-600" size={20} />
-                      <div className="flex-1">
-                        <strong className="font-bold">Beberapa data gagal dimuat:</strong>
-                        <ul className="list-disc pl-5 mt-1 text-sm">
-                          {fetchWarnings.map((warn, i) => <li key={i}>{warn}</li>)}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
+                  {/* BANNER ERROR KUNING DAN MERAH TELAH DIHAPUS DARI SINI UNTUK MEMBERSIHKAN LAYAR */}
+                  {/* SEKARANG ERROR/WARNING AKAN MASUK KE DALAM LONCENG NOTIFIKASI */}
 
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {isLoading ? (
