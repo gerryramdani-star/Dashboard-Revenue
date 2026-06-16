@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Revenue Lagikreatif</title>
     
+    <!-- 1. Import Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,8 +13,10 @@
         }
     </script>
     
+    <!-- 2. Import Babel untuk membaca sintaks React (JSX) di browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- PENTING: Import Map untuk mengatasi Error "react/jsx-runtime" di browser -->
     <script type="importmap">
     {
       "imports": {
@@ -24,8 +27,10 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
     
+    <!-- Tempat Aplikasi React akan dirender -->
     <div id="root"></div>
 
+    <!-- 3. Kode Utama Aplikasi React -->
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect } from 'https://esm.sh/react@18';
         import { createRoot } from 'https://esm.sh/react-dom@18/client';
@@ -43,15 +48,8 @@
         const initialFunnelData = []; 
         const initialAcquisition = []; 
         const initialMarketing = { main: { leads: 0, cr: 0 }, platforms: [] }; 
-        const initialRoadmap = { protect: [], optimize: [], growth: [] }; // Dikosongkan
-        
-        const initialTeamKpi = {
-          ceo: [ { label: 'Exec. Meeting', val: '12 / 20' }, { label: 'Opportunity', val: '6 / 10' }, { label: 'Client Baru', val: '1 / 3' } ],
-          cmo: [ { label: 'Pipeline Value', val: 'Rp 240M' }, { label: 'MQLs', val: '45' }, { label: 'Rev Contribution', val: '15%' } ],
-          ae: [ { label: 'Proposal Sent', val: '7' }, { label: 'Win Rate', val: '42%' }, { label: 'Closing', val: '3' } ],
-          cs: [ { label: 'Renewal Rate', val: '90%' }, { label: 'Upselling', val: 'Rp 15M' }, { label: 'NPS Score', val: '78' } ],
-          coo: [ { label: 'On Time Delivery', val: '92%' }, { label: 'Project Completion', val: '85%' }, { label: 'Resource Util.', val: '88%' } ]
-        };
+        const initialRoadmap = { protect: [], optimize: [], growth: [] }; 
+        const initialTeamKpi = { ceo: [], cmo: [], ae: [], cs: [], coo: [] }; // Dikosongkan
         
         const initialFinance = { totalRev: 0, grossProfit: 0, opEx: 0, netProfit: 0, cashPos: 0, ar: 0, ap: 0, burnRate: 0 };
 
@@ -866,7 +864,6 @@
         const RoadmapExecutionFull = ({ data, setData, isEditing }) => {
           const updateRoadmap = (category, idx, field, val) => { const updated = {...data}; updated[category][idx][field] = val; setData(updated); };
           
-          // DYNAMIC RENDERER: Menangani empty state jika data per pilar kosong
           const renderSection = (title, items, category, colorClass, borderClass, bgClass, textClass, Icon) => (
             <Card className={`border-t-4 ${borderClass}`}>
               <div className="flex items-center gap-2 mb-4">
@@ -910,11 +907,18 @@
           const renderKPICard = (title, items, teamCode, Icon) => (
             <Card className="border-t-4 border-[#0A1F44]">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2 dark:text-white"><Icon size={20} className="text-[#F5A623]"/> {title}</h3>
-              <ul className="space-y-3">
-                {items.map((item, i) => (
-                  <li key={i} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded"><span className="text-sm font-medium dark:text-slate-300"><EditableField isEditing={isEditing} value={item.label} onChange={(v) => updateKPI(teamCode, i, 'label', v)} inputClass="w-32" /></span><span className="font-bold text-[#0A1F44] dark:text-white text-right"><EditableField isEditing={isEditing} value={item.val} onChange={(v) => updateKPI(teamCode, i, 'val', v)} inputClass="w-20 text-right" /></span></li>
-                ))}
-              </ul>
+              {items && items.length > 0 ? (
+                  <ul className="space-y-3">
+                    {items.map((item, i) => (
+                      <li key={i} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded">
+                        <span className="text-sm font-medium dark:text-slate-300"><EditableField isEditing={isEditing} value={item.label} onChange={(v) => updateKPI(teamCode, i, 'label', v)} inputClass="w-32" /></span>
+                        <span className="font-bold text-[#0A1F44] dark:text-white text-right"><EditableField isEditing={isEditing} value={item.val} onChange={(v) => updateKPI(teamCode, i, 'val', v)} inputClass="w-20 text-right" /></span>
+                      </li>
+                    ))}
+                  </ul>
+              ) : (
+                  <p className="text-sm text-slate-500 italic py-2">Belum ada KPI...</p>
+              )}
             </Card>
           );
           return (
@@ -1048,11 +1052,12 @@
                 `${baseUrl}?gid=1113045615&output=csv`,  
                 `${baseUrl}?gid=711899863&output=csv`,   
                 `${baseUrl}?gid=2127476729&output=csv`,
-                `${baseUrl}?gid=1157766128&output=csv` // Tab 8: Roadmap Execution
+                `${baseUrl}?gid=1157766128&output=csv`,
+                `${baseUrl}?gid=2145307988&output=csv` // Tab 9: Team KPI
               ];
 
               try {
-                // Menarik KE-DELAPAN data secara bersamaan
+                // Menarik KE-SEMBILAN data secara bersamaan
                 const results = await Promise.all([
                     fetchSafely(urls[0], "Core Clients"),
                     fetchSafely(urls[1], "Strategic Revenue"),
@@ -1061,13 +1066,14 @@
                     fetchSafely(urls[4], "Sales Funnel"),
                     fetchSafely(urls[5], "Client Acquisition"),
                     fetchSafely(urls[6], "Marketing Dashboard"),
-                    fetchSafely(urls[7], "Roadmap Execution")
+                    fetchSafely(urls[7], "Roadmap Execution"),
+                    fetchSafely(urls[8], "Team KPI")
                 ]);
 
                 const warnings = results.filter(r => r.error).map(r => r.error);
                 if (warnings.length > 0) {
                     setFetchWarnings(warnings);
-                    if (warnings.length === 8) {
+                    if (warnings.length === 9) {
                         throw new Error("Semua koneksi ke Google Sheets diblokir. Harap periksa izin 'Publish to Web' atau nonaktifkan pemblokir iklan (Adblocker/Brave Shields).");
                     }
                 }
@@ -1227,7 +1233,6 @@
                     });
                 }
 
-                // DYNAMIC ROADMAP PARSING
                 if (results[7] && results[7].data) {
                     const parsedRoadmap = parseCSV(results[7].data);
                     const dynamicRoadmap = { protect: [], optimize: [], growth: [] };
@@ -1246,6 +1251,27 @@
                     });
                     
                     setRoadmapData(dynamicRoadmap);
+                }
+
+                // DYNAMIC TEAM KPI PARSING
+                if (results[8] && results[8].data) {
+                    const parsedKPI = parseCSV(results[8].data);
+                    const dynamicKPI = { ceo: [], cmo: [], ae: [], cs: [], coo: [] };
+                    
+                    parsedKPI.forEach(item => {
+                        const role = (item.role || '').toLowerCase().trim();
+                        const newItem = {
+                            label: item.kpi_name || item.kpi || item.name || '',
+                            val: item.value || '' // Disimpan sebagai string murni untuk kebebasan format
+                        };
+                        
+                        // Memastikan peran (role) valid sebelum dimasukkan ke dalam state
+                        if (dynamicKPI[role]) {
+                            dynamicKPI[role].push(newItem);
+                        }
+                    });
+                    
+                    setTeamKpiData(dynamicKPI);
                 }
 
                 const totalCoreRev = coreData.reduce((sum, item) => sum + item.rev, 0);
