@@ -1337,7 +1337,7 @@
           return (
             <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
               <aside className={`fixed top-0 left-0 z-40 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64 bg-[#0A1F44] border-r border-[#1a3668] flex flex-col`}>
-                <div className="h-16 flex items-center px-6 border-b border-white/10"><h1 className="text-white font-black text-xl tracking-tight">LAGIKREATIF</h1></div>
+                <div className="h-16 flex items-center px-6 border-b border-white/10"><img src="https://raw.githubusercontent.com/gerryramdani-star/Dashboard-Revenue/refs/heads/main/asset/logo-LK-white.png" alt="Logo Lagikreatif" className="h-8 w-auto" /></div>
                 <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
                   <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Command Center</p>
                   {menuItems.map((item) => {
@@ -1388,9 +1388,7 @@
                       <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} /> 
                       {isLoading ? 'Menyinkronkan...' : 'Sinkronkan Data'}
                     </button>
-                    <div className="hidden lg:flex items-center gap-2 mx-2 border-r border-slate-200 dark:border-slate-700 pr-4">
-                       <button className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#0A1F44] dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-md"><Filter size={14} /> Filter</button>
-                    </div>
+                    
                     <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-700 rounded-full transition-colors">
                       {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
