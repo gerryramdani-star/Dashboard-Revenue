@@ -51,7 +51,7 @@
         const initialRoadmap = { protect: [], optimize: [], growth: [] }; 
         const initialTeamKpi = { ceo: [], cmo: [], ae: [], cs: [], coo: [] };
         
-        const initialFinance = { totalRev: 0, grossProfit: 0, opEx: 0, netProfit: 0, cashPos: 0, ar: 0, ap: 0, burnRate: 0 };
+        const initialFinance = { totalRev: 0, grossProfit: 0, opEx: 0, proyeksiKas: 0, cashPos: 0, ar: 0, ap: 0, burnRate: 0 };
 
         const formatIDR = (num) => 'Rp' + Number(num).toLocaleString('id-ID');
 
@@ -935,15 +935,39 @@
           );
         };
 
-        const FinanceDashboardFull = ({ data, setData, isEditing }) => {
-          const updateFin = (field, val) => setData({...data, [field]: val});
+        const FinanceDashboardFull = ({ data, months, selectedMonth, onMonthChange, isEditing }) => {
+          // Fallback aman jika data bulan tersebut belum terisi
+          const safeData = data || { totalRev: 0, grossProfit: 0, opEx: 0, proyeksiKas: 0, cashPos: 0, ar: 0, ap: 0, burnRate: 0 };
+          
           return (
             <div className="space-y-6">
+              {/* DROPDOWN PEMILIH BULAN */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm gap-4">
+                 <h2 className="text-lg font-bold text-[#0A1F44] dark:text-white flex items-center gap-2">
+                    <BarChart2 className="text-[#F5A623]" /> 
+                    Rekap Keuangan Bulanan
+                 </h2>
+                 {months && months.length > 0 && (
+                    <div className="flex items-center gap-2">
+                       <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Pilih Bulan:</span>
+                       <select 
+                          value={selectedMonth} 
+                          onChange={(e) => onMonthChange(e.target.value)}
+                          className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-bold text-[#0A1F44] dark:text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#F5A623] cursor-pointer uppercase"
+                       >
+                          {months.map(m => (
+                             <option key={m} value={m}>{m}</option>
+                          ))}
+                       </select>
+                    </div>
+                 )}
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <KPICard title="Total Revenue" rawValue={data.totalRev} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('totalRev', v)} icon={DollarSign} trend="up" />
-                <KPICard title="Gross Profit" rawValue={data.grossProfit} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('grossProfit', v)} icon={Activity} trend="up" colorClass="text-emerald-600" />
-                <KPICard title="Operating Expense" rawValue={data.opEx} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('opEx', v)} icon={ArrowDownRight} trend="down" colorClass="text-rose-600" />
-                <KPICard title="Net Profit" rawValue={data.netProfit} isCurrency isEditing={isEditing} onValueChange={(v) => updateFin('netProfit', v)} icon={ArrowUpRight} trend="up" colorClass="text-[#F5A623]" />
+                <KPICard title="Total Revenue (A-B)" rawValue={safeData.totalRev} isCurrency isEditing={false} icon={DollarSign} trend="up" />
+                <KPICard title="Gross Profit (C)" rawValue={safeData.grossProfit} isCurrency isEditing={false} icon={Activity} trend="up" colorClass="text-emerald-600" />
+                <KPICard title="Operating Expense (B)" rawValue={safeData.opEx} isCurrency isEditing={false} icon={ArrowDownRight} trend="down" colorClass="text-rose-600" />
+                <KPICard title="Proyeksi Kas Akhir (I)" rawValue={safeData.proyeksiKas} isCurrency isEditing={false} icon={ArrowUpRight} trend="up" colorClass="text-[#F5A623]" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
@@ -956,16 +980,16 @@
                 </Card>
                 <div className="space-y-4">
                   {[
-                     { label: 'Cash Position', field: 'cashPos', icon: DollarSign, color: 'text-emerald-500' },
-                     { label: 'Accounts Receivable (A/R)', field: 'ar', icon: Download, color: 'text-[#F5A623]' },
-                     { label: 'Accounts Payable (A/P)', field: 'ap', icon: UploadIcon, color: 'text-rose-500' },
-                     { label: 'Monthly Burn Rate', field: 'burnRate', icon: Activity, color: 'text-slate-400 dark:text-white' },
+                     { label: 'Kas Real Time (D)', field: 'cashPos', icon: DollarSign, color: 'text-emerald-500' },
+                     { label: 'Invoice Open / Piutang', field: 'ar', icon: Download, color: 'text-[#F5A623]' },
+                     { label: 'Sisa Utang', field: 'ap', icon: UploadIcon, color: 'text-rose-500' },
+                     { label: 'Monthly Burn Rate (F+G)', field: 'burnRate', icon: Activity, color: 'text-slate-400 dark:text-white' },
                   ].map((item, idx) => {
                     const Icon = item.icon;
                     return (
                       <Card key={idx} className="bg-slate-50 dark:bg-slate-800/50 shadow-none border-none">
                         <div className="flex justify-between items-center">
-                          <div><p className="text-xs text-slate-500 mb-1">{item.label}</p><p className={`text-xl font-bold ${item.color.includes('emerald') ? '' : item.color} dark:text-white`}><EditableField type="number" isEditing={isEditing} value={data[item.field]} onChange={(v) => updateFin(item.field, v)} prefix="Rp " inputClass="w-32" /></p></div>
+                          <div><p className="text-xs text-slate-500 mb-1">{item.label}</p><p className={`text-xl font-bold ${item.color.includes('emerald') ? '' : item.color} dark:text-white`}><span>Rp{Number(safeData[item.field]).toLocaleString('id-ID')}</span></p></div>
                           <Icon className={item.color} />
                         </div>
                       </Card>
@@ -1010,6 +1034,11 @@
           const [roadmapData, setRoadmapData] = useState(initialRoadmap);
           const [teamKpiData, setTeamKpiData] = useState(initialTeamKpi);
           const [financeData, setFinanceData] = useState(initialFinance);
+          
+          // NEW STATES UNTUK DROP-DOWN FINANCE BULANAN
+          const [rawFinanceData, setRawFinanceData] = useState({});
+          const [financeMonths, setFinanceMonths] = useState([]);
+          const [selectedFinanceMonth, setSelectedFinanceMonth] = useState('');
 
           const fetchSheetData = async () => {
             const parseNumber = (val) => {
@@ -1066,7 +1095,8 @@
                 `${baseUrl}?gid=711899863&output=csv`,   
                 `${baseUrl}?gid=2127476729&output=csv`,
                 `${baseUrl}?gid=1157766128&output=csv`,
-                `${baseUrl}?gid=2145307988&output=csv`
+                `${baseUrl}?gid=2145307988&output=csv`,
+                `${baseUrl}?gid=1193863518&output=csv` // Tab 10: Finance Dashboard
               ];
 
               try {
@@ -1079,13 +1109,14 @@
                     fetchSafely(urls[5], "Client Acquisition"),
                     fetchSafely(urls[6], "Marketing Dashboard"),
                     fetchSafely(urls[7], "Roadmap Execution"),
-                    fetchSafely(urls[8], "Team KPI")
+                    fetchSafely(urls[8], "BOD KPI"),
+                    fetchSafely(urls[9], "Finance Dashboard")
                 ]);
 
                 const warnings = results.filter(r => r.error).map(r => r.error);
                 if (warnings.length > 0) {
                     setFetchWarnings(warnings);
-                    if (warnings.length === 9) {
+                    if (warnings.length === 10) {
                         throw new Error("Semua koneksi ke Google Sheets diblokir. Harap periksa izin 'Publish to Web' atau nonaktifkan pemblokir iklan (Adblocker/Brave Shields).");
                     }
                 }
@@ -1227,6 +1258,68 @@
                     setTeamKpiData(dynamicKPI);
                 }
 
+                // DYNAMIC FINANCE PARSING DENGAN MULTI-BULAN
+                if (results[9] && results[9].data) {
+                    const parsedFinance = parseCSV(results[9].data);
+                    if (parsedFinance.length > 0) {
+                        // Mencari daftar bulan dari header (Kolom B, C, D dst, abaikan kolom 'metrik')
+                        const allKeys = Object.keys(parsedFinance[0]);
+                        const monthKeys = allKeys.filter(k => k !== 'metrik' && k !== '');
+                        
+                        // Menampung data yang sudah di-mapping berdasarkan bulan { jun: {hpp: 10, opex: 5}, jul: {...} }
+                        const finMapByMonth = {};
+                        monthKeys.forEach(m => {
+                            finMapByMonth[m] = {};
+                            parsedFinance.forEach(item => {
+                                const metrik = (item.metrik || '').toLowerCase().trim();
+                                if (metrik) finMapByMonth[m][metrik] = parseNumber(item[m]);
+                            });
+                        });
+
+                        // Otak Kalkulator: Menghitung 8 Parameter Utama per Bulan
+                        const calculatedFinanceByMonth = {};
+                        monthKeys.forEach(m => {
+                            const finMap = finMapByMonth[m];
+                            const hpp = finMap['hpp'] || 0; 
+                            const opex = finMap['opex'] || 0; 
+                            const kas_real_time = finMap['kas_real_time'] || 0; 
+                            const pelunasan_cust = finMap['pelunasan_cust'] || 0; 
+                            const biaya_hpp = finMap['biaya_hpp'] || 0; 
+                            const biaya_opex = finMap['biaya_opex'] || 0; 
+                            const bayar_utang = finMap['bayar_utang'] || 0; 
+                            const invoice_open_rp = finMap['invoice_open_rp'] || 0;
+                            const sisa_utang = finMap['sisa_utang'] || 0;
+
+                            calculatedFinanceByMonth[m] = {
+                                totalRev: hpp - opex,
+                                grossProfit: hpp - opex,
+                                opEx: opex,
+                                proyeksiKas: kas_real_time + pelunasan_cust - biaya_hpp - biaya_opex - bayar_utang,
+                                cashPos: kas_real_time,
+                                ar: invoice_open_rp,
+                                ap: sisa_utang,
+                                burnRate: biaya_hpp + biaya_opex
+                            };
+                        });
+
+                        // Simpan ke state agar bisa ditukar-tukar tanpa fetch ulang
+                        setRawFinanceData(calculatedFinanceByMonth);
+                        
+                        // Update ketersediaan opsi bulan di Dropdown
+                        setFinanceMonths(prevMonths => {
+                             // Auto-select bulan berjalan (Misal: 'jun') jika belum ada yang terpilih
+                             const currentMonthPrefix = new Date().toLocaleString('en-US', { month: 'short' }).toLowerCase();
+                             setSelectedFinanceMonth(prevSelected => {
+                                 if (!prevSelected || !monthKeys.includes(prevSelected)) {
+                                      return monthKeys.includes(currentMonthPrefix) ? currentMonthPrefix : (monthKeys[0] || '');
+                                 }
+                                 return prevSelected;
+                             });
+                             return monthKeys;
+                        });
+                    }
+                }
+
                 const totalCoreRev = coreData.reduce((sum, item) => sum + item.rev, 0);
                 const totalStratRev = stratData.reduce((sum, item) => sum + (item.rev || 0), 0);
                 const totalProjRev = projData.reduce((sum, item) => sum + (item.rev || 0), 0);
@@ -1270,7 +1363,7 @@
 
             const newNotifs = [];
             
-            // 1. Error / Warnings (Menggantikan Banner di layar utama)
+            // 1. Error / Warnings
             if (fetchError) {
                 newNotifs.push({ id: 'err', type: 'error', title: 'Sinkronisasi Gagal', message: 'Semua koneksi ke Google Sheets terputus atau diblokir.' });
             } else if (fetchWarnings && fetchWarnings.length > 0) {
@@ -1307,7 +1400,6 @@
 
             setNotifications(newNotifs);
             
-            // Trigger red dot
             if (revenueData.current > 0 || fetchError || fetchWarnings.length > 0) {
                 setHasUnread(true);
             }
@@ -1336,7 +1428,7 @@
               case 'Marketing Dashboard': return <MarketingDashboardFull data={marketingData} setData={setMarketingData} isEditing={isEditing} />;
               case 'Roadmap Execution': return <RoadmapExecutionFull data={roadmapData} setData={setRoadmapData} isEditing={isEditing} />;
               case 'BOD KPI': return <TeamKPIFull data={teamKpiData} setData={setTeamKpiData} isEditing={isEditing} />;
-              case 'Finance Dashboard': return <FinanceDashboardFull data={financeData} setData={setFinanceData} isEditing={isEditing} />;
+              case 'Finance Dashboard': return <FinanceDashboardFull data={rawFinanceData[selectedFinanceMonth]} months={financeMonths} selectedMonth={selectedFinanceMonth} onMonthChange={setSelectedFinanceMonth} isEditing={isEditing} />;
               default: return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
             }
           };
@@ -1468,9 +1560,6 @@
                         </div>
                       </div>
                   </div>
-                  
-                  {/* BANNER ERROR KUNING DAN MERAH TELAH DIHAPUS DARI SINI UNTUK MEMBERSIHKAN LAYAR */}
-                  {/* SEKARANG ERROR/WARNING AKAN MASUK KE DALAM LONCENG NOTIFIKASI */}
 
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {isLoading ? (
