@@ -41,7 +41,7 @@
         } from 'https://esm.sh/lucide-react@0.292.0';
 
         // --- INITIAL DATA (Dikosongkan agar murni dari GSheets) ---
-        const initialRevenueData = { current: 0, target: 120000000, activeClients: 0, targetNew: 3, renewalRate: 90, healthScore: 80, forecast: 85000000 };
+        const initialRevenueData = { current: 0, estimasiTotal: 0, target: 120000000, activeClients: 0, targetNew: 3, renewalRate: 90, healthScore: 80, forecast: 85000000 };
         const initialClients = [];
         const initialStrategicRevenue = [];
         const initialProjectRevenue = [];
@@ -155,14 +155,17 @@
         // --- PAGE COMPONENTS ---
         const ExecutiveSummary = ({ data, setData, isEditing }) => {
           const gap = data.target - data.current;
+          const gapEstimasi = data.target - data.estimasiTotal;
           const updateData = (key, value) => setData(prev => ({ ...prev, [key]: value }));
           return (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <KPICard title="Total Revenue Bulan Ini" rawValue={data.current} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('current', val)} icon={DollarSign} trend="up" colorClass="text-[#0A1F44] dark:text-white" />
+                <KPICard title="Estimasi Total Revenue" rawValue={data.estimasiTotal} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('estimasiTotal', val)} icon={BarChart2} colorClass="text-[#F5A623] dark:text-[#F5A623]" subtitle="Core + Strategic & Project (Est)" />
                 <KPICard title="Target Revenue" rawValue={data.target} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('target', val)} icon={Target} colorClass="text-[#0A1F44] dark:text-white" />
-                <KPICard title="Revenue Gap" rawValue={gap} isCurrency value={formatIDR(gap)} icon={Activity} trend={gap > 0 ? "down" : "up"} colorClass={gap > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"} subtitle={gap <= 0 ? "Target Achieved!" : "Needs action"} />
-                <KPICard title="Forecast (90 Hari)" rawValue={data.forecast} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('forecast', val)} icon={BarChart2} trend="up" colorClass="text-emerald-600 dark:text-emerald-400" />
+                <KPICard title="Revenue Gap (Realisasi)" rawValue={gap} isCurrency value={formatIDR(gap)} icon={Activity} trend={gap > 0 ? "down" : "up"} colorClass={gap > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"} subtitle={gap <= 0 ? "Target Achieved!" : "Needs action"} />
+                <KPICard title="Revenue Gap (Estimasi)" rawValue={gapEstimasi} isCurrency value={formatIDR(gapEstimasi)} icon={Activity} trend={gapEstimasi > 0 ? "down" : "up"} colorClass={gapEstimasi > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"} subtitle={gapEstimasi <= 0 ? "Proyeksi Aman!" : "Pipeline belum cukup"} />
+                <KPICard title="Forecast (90 Hari)" rawValue={data.forecast} isCurrency isEditing={isEditing} onValueChange={(val) => updateData('forecast', val)} icon={ArrowUpRight} trend="up" colorClass="text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <KPICard title="Active Clients" value={data.activeClients} rawValue={data.activeClients} isEditing={isEditing} onValueChange={(val) => updateData('activeClients', val)} icon={Users} />
@@ -1225,6 +1228,9 @@
                 }
 
                 const totalCoreRev = coreData.reduce((sum, item) => sum + item.rev, 0);
+                const totalStratRev = stratData.reduce((sum, item) => sum + (item.rev || 0), 0);
+                const totalProjRev = projData.reduce((sum, item) => sum + (item.rev || 0), 0);
+                
                 const totalStratRealisasi = stratData.reduce((sum, item) => sum + (item.realisasi || 0), 0);
                 const totalProjRealisasi = projData.reduce((sum, item) => sum + (item.realisasi || 0), 0);
 
@@ -1237,6 +1243,7 @@
                 setRevenueData(prev => ({
                   ...prev,
                   current: totalCoreRev + totalStratRealisasi + totalProjRealisasi,
+                  estimasiTotal: totalCoreRev + totalStratRev + totalProjRev,
                   activeClients: coreData.length,
                   healthScore: avgHealthScore, 
                   target: targetData ? parseNumber(targetData.target_revenue) : prev.target,
@@ -1315,7 +1322,7 @@
             { name: 'Executive Summary', icon: LayoutDashboard }, { name: 'Revenue Dashboard', icon: DollarSign },
             { name: 'Sales Funnel', icon: Filter }, { name: 'Client Health Score', icon: Activity },
             { name: 'Client Acquisition', icon: Users }, { name: 'Marketing Dashboard', icon: Target },
-            { name: 'Roadmap Execution', icon: Map }, { name: 'Team KPI', icon: Briefcase },
+            { name: 'Roadmap Execution', icon: Map }, { name: 'BOD KPI', icon: Briefcase },
             { name: 'Finance Dashboard', icon: BarChart2 },
           ];
 
@@ -1328,7 +1335,7 @@
               case 'Client Acquisition': return <ClientAcquisitionFull data={acquisitionData} setData={setAcquisitionData} isEditing={isEditing} />;
               case 'Marketing Dashboard': return <MarketingDashboardFull data={marketingData} setData={setMarketingData} isEditing={isEditing} />;
               case 'Roadmap Execution': return <RoadmapExecutionFull data={roadmapData} setData={setRoadmapData} isEditing={isEditing} />;
-              case 'Team KPI': return <TeamKPIFull data={teamKpiData} setData={setTeamKpiData} isEditing={isEditing} />;
+              case 'BOD KPI': return <TeamKPIFull data={teamKpiData} setData={setTeamKpiData} isEditing={isEditing} />;
               case 'Finance Dashboard': return <FinanceDashboardFull data={financeData} setData={setFinanceData} isEditing={isEditing} />;
               default: return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
             }
