@@ -37,7 +37,7 @@
         import { 
           LayoutDashboard, DollarSign, Filter, Bell, Sun, Moon, Download, 
           ChevronRight, BarChart2, Users, Target, Activity, Map, UserCheck, 
-          Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar, AlertCircle, Info, RefreshCw
+          Briefcase, Menu, X, ArrowUpRight, ArrowDownRight, MoreVertical, Search, Edit3, Check, Calendar, AlertCircle, Info, RefreshCw, Award
         } from 'https://esm.sh/lucide-react@0.292.0';
 
         // --- INITIAL DATA (Dikosongkan agar murni dari GSheets) ---
@@ -1001,6 +1001,193 @@
           );
         };
 
+        const EmployeeKPIFull = ({ targets, logs, isEditing }) => {
+          if (!targets || targets.length === 0) {
+            return (
+              <Card className="flex flex-col items-center justify-center p-12">
+                <Award size={48} className="text-slate-300 mb-4" />
+                <p className="text-slate-500 font-bold text-lg">Menunggu data Employee KPI...</p>
+                <p className="text-sm text-slate-400 mt-2">Pastikan Tab <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">kpi_target</span> dan <span className="font-mono bg-slate-100 dark:bg-slate-700 px-1 rounded">log_harian</span> sudah ditambahkan dan terhubung.</p>
+              </Card>
+            );
+          }
+
+          // Otomatis Deteksi Tanggal Hari Ini (Format: DD/MM/YYYY)
+          const today = new Date();
+          const dd = String(today.getDate()).padStart(2, '0');
+          const mm = String(today.getMonth() + 1).padStart(2, '0');
+          const yyyy = today.getFullYear();
+          const todayStr = `${dd}/${mm}/${yyyy}`; 
+          const currentMonthStr = `${mm}/${yyyy}`; 
+
+          // Fungsi penyeragam format tanggal agar anti-error jika ada typo
+          const normalizeDate = (dStr) => {
+              if(!dStr) return '';
+              const parts = dStr.split(/[\/\-]/); 
+              if(parts.length === 3) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2].length === 2 ? '20'+parts[2] : parts[2]}`;
+              return dStr;
+          };
+
+          const processedData = targets.map(t => {
+            const empLogs = (logs || []).filter(l => (l.nama || '').toLowerCase().trim() === (t.nama || '').toLowerCase().trim());
+            
+            let aktualHariIni = 0;
+            let aktualBulanIni = 0;
+            
+            empLogs.forEach(log => {
+                const logDate = normalizeDate(log.tanggal || '');
+                const isToday = logDate === todayStr;
+                const isThisMonth = logDate.substring(3) === currentMonthStr; 
+                
+                const isDesigner = (t.divisi || '').toLowerCase().includes('designer');
+                let points = 0;
+                
+                const qtyStd = Number(log.qty_standar) || 0;
+                const qtyCar = Number(log.qty_carousel) || 0;
+
+                // SISTEM BOBOT OTOMATIS: Carousel x3 khusus untuk divisi Designer
+                if (isDesigner) {
+                    points = (qtyStd * 1) + (qtyCar * 3);
+                } else {
+                    points = qtyStd + qtyCar; 
+                }
+                
+                if (isToday) aktualHariIni += points;
+                if (isThisMonth) aktualBulanIni += points;
+            });
+            
+            const targetHari = Number(t.target_hari) || 1;
+            const baselineKpi = Number(t.baseline_kpi) || 1;
+            const targetBulan = Number(t.target_bulan) || 1;
+            
+            // Perhitungan Visual Utility
+            const workloadPct = Math.min(100, (targetHari / baselineKpi) * 100);
+            const dailyProgressPct = Math.min(100, (aktualHariIni / targetHari) * 100);
+            
+            let status = 'Optimal';
+            let statusColor = 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800';
+            if (aktualHariIni === 0) {
+                status = 'Belum Ada Progress';
+                statusColor = 'text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700';
+            } else if (dailyProgressPct < 50) {
+                status = 'Risiko Bottleneck';
+                statusColor = 'text-rose-500 bg-rose-100 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800';
+            } else if (dailyProgressPct < 100) {
+                status = 'On Track';
+                statusColor = 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800';
+            } else {
+                status = 'Target Achieved 🎉';
+                statusColor = 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 font-bold border border-emerald-300 dark:border-emerald-700';
+            }
+
+            return {
+                ...t, aktualHariIni, aktualBulanIni, workloadPct, dailyProgressPct,
+                status, statusColor, targetHari, baselineKpi, targetBulan
+            };
+          });
+
+          // Sort Roster (Prioritaskan yang belum ada progress atau risiko bottleneck)
+          processedData.sort((a, b) => a.dailyProgressPct - b.dailyProgressPct);
+
+          const totalEmp = processedData.length;
+          const avgWorkload = processedData.reduce((acc, curr) => acc + curr.workloadPct, 0) / (totalEmp || 1);
+          const totalDailyActual = processedData.reduce((acc, curr) => acc + curr.aktualHariIni, 0);
+
+          return (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-gradient-to-br from-[#0A1F44] to-[#1a3668] text-white border-none shadow-md">
+                   <p className="text-sm text-slate-300 mb-1">Total Karyawan (Produksi)</p>
+                   <h3 className="text-3xl font-black text-[#F5A623]">{totalEmp} <span className="text-sm font-medium text-white/70">Orang</span></h3>
+                </Card>
+                <Card className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800">
+                   <p className="text-sm text-emerald-800 dark:text-emerald-400 font-medium mb-1">Total Produksi Hari Ini</p>
+                   <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-500">{totalDailyActual} <span className="text-sm font-medium opacity-70">Konten/Poin</span></h3>
+                </Card>
+                <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                   <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-1">Avg. Workload Utilization</p>
+                   <div className="flex items-end gap-3 mt-1">
+                      <h3 className="text-3xl font-black text-[#0A1F44] dark:text-white">{avgWorkload.toFixed(1)}%</h3>
+                      <div className="flex-1 pb-1.5">
+                         <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#F5A623] rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, avgWorkload)}%` }}></div>
+                         </div>
+                      </div>
+                   </div>
+                </Card>
+              </div>
+
+              <Card>
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">Daily Progress Roster</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Pemantauan Aktual vs Target Hari Ini (<span className="font-bold text-[#F5A623]">{todayStr}</span>)</p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 dark:text-slate-400">
+                       <tr>
+                         <th className="px-4 py-3">Nama & Divisi</th>
+                         <th className="px-4 py-3">Klien Dipegang</th>
+                         <th className="px-4 py-3 min-w-[150px]">Beban Kerja (Utilitas)</th>
+                         <th className="px-4 py-3 min-w-[150px]">Progress Hari Ini</th>
+                         <th className="px-4 py-3 min-w-[120px]">Bulan Ini</th>
+                         <th className="px-4 py-3">Status Roster</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {processedData.length === 0 ? (
+                          <tr><td colSpan="6" className="text-center py-8 text-slate-500 italic">Belum ada data target karyawan.</td></tr>
+                       ) : processedData.map((emp, i) => (
+                         <tr key={i} className="border-b dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                           <td className="px-4 py-3">
+                              <p className="font-bold text-[#0A1F44] dark:text-white">{emp.nama}</p>
+                              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">{emp.divisi}</p>
+                           </td>
+                           <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
+                              <div className="max-w-[180px] leading-relaxed" title={emp.klien_dipegang}>{emp.klien_dipegang}</div>
+                           </td>
+                           <td className="px-4 py-3">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-slate-500 font-medium">Beban: <strong className="text-slate-700 dark:text-slate-300">{emp.targetHari}</strong> / {emp.baselineKpi}</span>
+                                <span className={`font-bold ${emp.workloadPct >= 100 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}>{emp.workloadPct.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full ${emp.workloadPct >= 100 ? 'bg-rose-500' : 'bg-blue-400'}`} style={{ width: `${Math.min(100, emp.workloadPct)}%` }}></div>
+                              </div>
+                           </td>
+                           <td className="px-4 py-3">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="font-medium text-slate-500">Selesai: <strong className="text-[#0A1F44] dark:text-white text-sm">{emp.aktualHariIni}</strong> / {emp.targetHari}</span>
+                                <span className="font-bold text-[#F5A623]">{emp.dailyProgressPct.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
+                                <div className={`h-full rounded-full transition-all duration-1000 ${emp.dailyProgressPct >= 100 ? 'bg-emerald-500' : emp.dailyProgressPct >= 50 ? 'bg-yellow-400' : 'bg-rose-500'}`} style={{ width: `${emp.dailyProgressPct}%` }}></div>
+                              </div>
+                           </td>
+                           <td className="px-4 py-3">
+                              <div className="text-xs">
+                                <span className="font-bold text-[#0A1F44] dark:text-white text-sm">{emp.aktualBulanIni}</span>
+                                <span className="text-slate-400"> / {emp.targetBulan}</span>
+                              </div>
+                           </td>
+                           <td className="px-4 py-3">
+                              <span className={`px-2.5 py-1 text-[10px] uppercase tracking-widest rounded-md whitespace-nowrap ${emp.statusColor}`}>
+                                {emp.status}
+                              </span>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          );
+        };
+
         // --- MAIN APP COMPONENT ---
         function App() {
           const [activePage, setActivePage] = useState('Executive Summary');
@@ -1035,6 +1222,10 @@
           const [teamKpiData, setTeamKpiData] = useState(initialTeamKpi);
           const [financeData, setFinanceData] = useState(initialFinance);
           
+          // NEW STATES UNTUK EMPLOYEE KPI
+          const [employeeTargets, setEmployeeTargets] = useState([]);
+          const [employeeLogs, setEmployeeLogs] = useState([]);
+
           // NEW STATES UNTUK DROP-DOWN FINANCE BULANAN
           const [rawFinanceData, setRawFinanceData] = useState({});
           const [financeMonths, setFinanceMonths] = useState([]);
@@ -1096,7 +1287,9 @@
                 `${baseUrl}?gid=2127476729&output=csv`,
                 `${baseUrl}?gid=1157766128&output=csv`,
                 `${baseUrl}?gid=2145307988&output=csv`,
-                `${baseUrl}?gid=1193863518&output=csv` // Tab 10: Finance Dashboard
+                `${baseUrl}?gid=1193863518&output=csv`, // Tab 10: Finance Dashboard
+                `${baseUrl}?gid=379494330&output=csv`, // Tab 11: Master KPI Target
+                `${baseUrl}?gid=984835384&output=csv`  // Tab 12: Log Harian
               ];
 
               try {
@@ -1110,13 +1303,15 @@
                     fetchSafely(urls[6], "Marketing Dashboard"),
                     fetchSafely(urls[7], "Roadmap Execution"),
                     fetchSafely(urls[8], "BOD KPI"),
-                    fetchSafely(urls[9], "Finance Dashboard")
+                    fetchSafely(urls[9], "Finance Dashboard"),
+                    fetchSafely(urls[10], "KPI Target"),
+                    fetchSafely(urls[11], "Log Harian")
                 ]);
 
                 const warnings = results.filter(r => r.error).map(r => r.error);
                 if (warnings.length > 0) {
                     setFetchWarnings(warnings);
-                    if (warnings.length === 10) {
+                    if (warnings.length === 12) {
                         throw new Error("Semua koneksi ke Google Sheets diblokir. Harap periksa izin 'Publish to Web' atau nonaktifkan pemblokir iklan (Adblocker/Brave Shields).");
                     }
                 }
@@ -1320,6 +1515,10 @@
                     }
                 }
 
+                // DYNAMIC EMPLOYEE KPI PARSING
+                if (results[10] && results[10].data) setEmployeeTargets(parseCSV(results[10].data));
+                if (results[11] && results[11].data) setEmployeeLogs(parseCSV(results[11].data));
+
                 const totalCoreRev = coreData.reduce((sum, item) => sum + item.rev, 0);
                 const totalStratRev = stratData.reduce((sum, item) => sum + (item.rev || 0), 0);
                 const totalProjRev = projData.reduce((sum, item) => sum + (item.rev || 0), 0);
@@ -1415,6 +1614,7 @@
             { name: 'Sales Funnel', icon: Filter }, { name: 'Client Health Score', icon: Activity },
             { name: 'Client Acquisition', icon: Users }, { name: 'Marketing Dashboard', icon: Target },
             { name: 'Roadmap Execution', icon: Map }, { name: 'BOD KPI', icon: Briefcase },
+            { name: 'Employee KPI', icon: Award },
             { name: 'Finance Dashboard', icon: BarChart2 },
           ];
 
@@ -1428,6 +1628,7 @@
               case 'Marketing Dashboard': return <MarketingDashboardFull data={marketingData} setData={setMarketingData} isEditing={isEditing} />;
               case 'Roadmap Execution': return <RoadmapExecutionFull data={roadmapData} setData={setRoadmapData} isEditing={isEditing} />;
               case 'BOD KPI': return <TeamKPIFull data={teamKpiData} setData={setTeamKpiData} isEditing={isEditing} />;
+              case 'Employee KPI': return <EmployeeKPIFull targets={employeeTargets} logs={employeeLogs} isEditing={isEditing} />;
               case 'Finance Dashboard': return <FinanceDashboardFull data={rawFinanceData[selectedFinanceMonth]} months={financeMonths} selectedMonth={selectedFinanceMonth} onMonthChange={setSelectedFinanceMonth} isEditing={isEditing} />;
               default: return <ExecutiveSummary data={revenueData} setData={setRevenueData} isEditing={isEditing} />;
             }
