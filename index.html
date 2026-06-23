@@ -1029,7 +1029,14 @@
           };
 
           const processedData = targets.map(t => {
-            const empLogs = (logs || []).filter(l => (l.nama || '').toLowerCase().trim() === (t.nama || '').toLowerCase().trim());
+            const tName = (t.nama || '').toLowerCase().trim();
+            
+            // Pencocokan Nama yang Lebih Cerdas (Toleransi Nama Panggilan vs Nama Lengkap)
+            const empLogs = (logs || []).filter(l => {
+                const lName = (l.nama || '').toLowerCase().trim();
+                if (!lName || !tName) return false;
+                return tName === lName || tName.includes(lName) || lName.includes(tName);
+            });
             
             let aktualHariIni = 0;
             let aktualBulanIni = 0;
@@ -1090,30 +1097,88 @@
           processedData.sort((a, b) => a.dailyProgressPct - b.dailyProgressPct);
 
           const totalEmp = processedData.length;
-          const avgWorkload = processedData.reduce((acc, curr) => acc + curr.workloadPct, 0) / (totalEmp || 1);
-          const totalDailyActual = processedData.reduce((acc, curr) => acc + curr.aktualHariIni, 0);
+          
+          // --- KALKULASI OPSI 1: DAILY STATUS RADAR ---
+          const statusCounts = {
+              optimal: processedData.filter(e => e.dailyProgressPct >= 100).length,
+              onTrack: processedData.filter(e => e.dailyProgressPct >= 50 && e.dailyProgressPct < 100).length,
+              bottleneck: processedData.filter(e => e.dailyProgressPct > 0 && e.dailyProgressPct < 50).length,
+              noProgress: processedData.filter(e => e.aktualHariIni === 0).length,
+          };
+          const goodCount = statusCounts.optimal + statusCounts.onTrack;
+
+          // --- KALKULASI OPSI 3: WORKLOAD RADAR PER DIVISI ---
+          const divisionStats = {};
+          processedData.forEach(emp => {
+              const div = emp.divisi || 'Lainnya';
+              if (!divisionStats[div]) {
+                  divisionStats[div] = { totalWorkload: 0, count: 0 };
+              }
+              divisionStats[div].totalWorkload += emp.workloadPct;
+              divisionStats[div].count += 1;
+          });
+
+          const divisionAverages = Object.keys(divisionStats).map(div => ({
+              divisi: div,
+              avgWorkload: divisionStats[div].totalWorkload / divisionStats[div].count
+          })).sort((a, b) => b.avgWorkload - a.avgWorkload); // Urutkan dari beban paling berat
 
           return (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-gradient-to-br from-[#0A1F44] to-[#1a3668] text-white border-none shadow-md">
-                   <p className="text-sm text-slate-300 mb-1">Total Karyawan (Produksi)</p>
-                   <h3 className="text-3xl font-black text-[#F5A623]">{totalEmp} <span className="text-sm font-medium text-white/70">Orang</span></h3>
-                </Card>
-                <Card className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800">
-                   <p className="text-sm text-emerald-800 dark:text-emerald-400 font-medium mb-1">Total Produksi Hari Ini</p>
-                   <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-500">{totalDailyActual} <span className="text-sm font-medium opacity-70">Konten/Poin</span></h3>
-                </Card>
-                <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                   <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-1">Avg. Workload Utilization</p>
-                   <div className="flex items-end gap-3 mt-1">
-                      <h3 className="text-3xl font-black text-[#0A1F44] dark:text-white">{avgWorkload.toFixed(1)}%</h3>
-                      <div className="flex-1 pb-1.5">
-                         <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#F5A623] rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, avgWorkload)}%` }}></div>
-                         </div>
-                      </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* OPSI 1: ROSTER HEALTH & DAILY STATUS */}
+                <Card className="bg-gradient-to-br from-[#0A1F44] to-[#1a3668] text-white border-none shadow-md flex flex-col justify-between">
+                   <div>
+                       <p className="text-sm text-slate-300 mb-1">Total Tim Aktif</p>
+                       <h3 className="text-3xl font-black text-[#F5A623]">{totalEmp} <span className="text-sm font-medium text-white/70">Orang</span></h3>
                    </div>
+                   <div className="mt-4 pt-4 border-t border-white/20 space-y-3">
+                       <p className="text-xs text-slate-300 font-bold uppercase tracking-wider mb-2">Daily Status Radar</p>
+                       <div className="flex justify-between items-center text-sm">
+                           <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span> On Track / Achieved</span>
+                           <span className="font-bold text-emerald-400">{goodCount}</span>
+                       </div>
+                       <div className="flex justify-between items-center text-sm">
+                           <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]"></span> Risiko Bottleneck</span>
+                           <span className="font-bold text-yellow-400">{statusCounts.bottleneck}</span>
+                       </div>
+                       <div className="flex justify-between items-center text-sm">
+                           <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]"></span> Belum Ada Progress</span>
+                           <span className="font-bold text-rose-400">{statusCounts.noProgress}</span>
+                       </div>
+                   </div>
+                </Card>
+
+                {/* OPSI 3: WORKLOAD RADAR PER DIVISI */}
+                <Card className="lg:col-span-2 shadow-md border-t-4 border-t-[#F5A623]">
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-[#0A1F44] dark:text-white">Workload Radar per Divisi</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Utilitas beban kerja rata-rata per divisi (Baseline vs Assigned Target)</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                        {divisionAverages.length === 0 ? (
+                            <p className="text-sm text-slate-500 italic">Belum ada data divisi...</p>
+                        ) : divisionAverages.map((div, idx) => (
+                            <div key={idx} className="space-y-1.5">
+                                <div className="flex justify-between text-sm items-end">
+                                    <span className="font-bold text-slate-700 dark:text-slate-300">{div.divisi}</span>
+                                    <span className={`font-bold text-base ${div.avgWorkload >= 100 ? 'text-rose-500' : div.avgWorkload < 50 ? 'text-[#38bdf8] dark:text-[#38bdf8]' : 'text-emerald-500'}`}>
+                                        {div.avgWorkload.toFixed(1)}%
+                                    </span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-1000 ${div.avgWorkload >= 100 ? 'bg-rose-500' : div.avgWorkload < 50 ? 'bg-[#38bdf8]' : 'bg-emerald-500'}`}
+                                        style={{ width: `${Math.min(100, div.avgWorkload)}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-[10px] text-slate-400 text-right font-semibold uppercase tracking-wider">
+                                    {div.avgWorkload >= 100 ? '🚨 Overload' : div.avgWorkload < 50 ? '❄️ Under-utilized' : '✅ Optimal'}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
                 </Card>
               </div>
 
@@ -1289,7 +1354,7 @@
                 `${baseUrl}?gid=2145307988&output=csv`,
                 `${baseUrl}?gid=1193863518&output=csv`, // Tab 10: Finance Dashboard
                 `${baseUrl}?gid=379494330&output=csv`, // Tab 11: Master KPI Target
-                `${baseUrl}?gid=984835384&output=csv`  // Tab 12: Log Harian
+                `${baseUrl}?gid=1573069359&output=csv`  // Tab 12: Log Harian
               ];
 
               try {
